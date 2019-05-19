@@ -171,12 +171,7 @@ struct uscore
 struct scorebrd
 {
 	struct uscore entry[MSSAVE];
-} scoresave[MGTYPE] = 
-	{
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	};
+} scoresave[MGTYPE];
 
 syncscreen()
 {
