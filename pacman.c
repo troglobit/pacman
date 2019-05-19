@@ -201,7 +201,7 @@ redraw:
 		update();
 		syncscreen();
 		tries = 0;
-		while ((pacptr->dirn == NULL) && (tries++ < 300))
+		while ((pacptr->dirn == DNULL) && (tries++ < 300))
 		{
 			napms(100);
 			poll(1);
