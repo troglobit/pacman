@@ -1,4 +1,4 @@
-#ident	"@(#)curses:demo/pacman/README	1.2"
+
 Pacman has been tested on cbosgd (running 4.1BSD with the fast timer
 driver added), and on vanilla 5.0 systems on a VAX and on a 3B.
 It is strongly urged that you add the fast timer driver (../ft) since
