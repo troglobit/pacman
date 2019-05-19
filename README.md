@@ -79,6 +79,7 @@ Debian GNU/Linux based systems you can get this using:
     sudo apt install build-essential libncurses5-dev
 
 Other Linux systems have similar packages.  On FreeBSD you don't need
-anything in particular as long as you can fetch the tarabll.
+anything in particular as long as you can fetch the tarball and have
+a working `cc` and `make`.
 
 [master]: https://github.com/troglobit/pacman/archive/master.tar.gz
