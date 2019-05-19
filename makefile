@@ -1,42 +1,21 @@
-CC =	cc
-DFLAGS =
-CFLAGS =	-W -Wall -Wextra -g -O2
-LDFLAGS =
-CFILES =	pacman.c monster.c util.c movie.c
-OFILES =	pacman.o monster.o util.o movie.o
+OBJS   = pacman.o monster.o util.o movie.o
+CFLAGS = -W -Wall -Wextra -g -O2
+LDLIBS = -lcurses
 
-pacman:	$(OFILES)
-	$(CC) $(LDFLAGS) -o pacman $(OFILES) -lcurses
+all: pacman
 
-pacman.o:	pacman.c pacdefs.h
-	$(CC) -c $(CFLAGS) $(DFLAGS) pacman.c
+pacman:	$(OBJS)
 
-monster.o:	monster.c pacdefs.h
-	$(CC) -c $(CFLAGS) $(DFLAGS) monster.c
+pacman.o:  pacman.c  pacdefs.h
+monster.o: monster.c pacdefs.h
+util.o:    util.c    pacdefs.h
+movie.o:   movie.c   pacdefs.h
 
-util.o:	util.c pacdefs.h
-	$(CC) -c $(CFLAGS) $(DFLAGS) util.c
+install: pacman
+	install -b -s pacman /usr/games/pacman
 
-movie.o:	movie.c pacdefs.h
-	$(CC) -c $(CFLAGS) $(DFLAGS) movie.c
-
-
-install:	pacman
-	cp pacman /usr/games/pacman
-
-strip:	pacman
-	strip pacman
-
-shrink:
+clean:
 	-rm -f *.o
 
-clean:	shrink
+distclean: clean
 	-rm -f pacman errs core a.out
-
-lint:	$(CFILES)
-	lint -pc $(CFILES)
-
-list:	$(CFILES) pacdefs.h makefile
-	oprl -x makefile $(CFILES) pacdefs.h
-	oprl -x -C $(CFILES)
-	touch list
