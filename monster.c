@@ -1,3 +1,11 @@
+/*	Copyright (c) 1984 AT&T	*/
+/*	  All Rights Reserved  	*/
+
+/*	THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF AT&T	*/
+/*	The copyright notice above does not evidence any   	*/
+/*	actual or intended publication of such source code.	*/
+
+#ident	"@(#)curses:demo/pacman/monster.c	1.1"
 #include <stdio.h>
 #include	"pacdefs.h"
 
@@ -11,6 +19,7 @@ extern int
 	killflg,
 	potion,
 	monst_often,
+	mflash, rflash, pflash,
 	rounds;
 
 extern unsigned
@@ -29,13 +38,6 @@ char runner_names[] = "bipc";
 char *full_names[] = {
 	"Blinky", "Inky", "Pinky", "Clyde", 0
 };
-#ifdef A_BLINK
-#define	flash	A_BOLD
-#define	rflash	A_REVERSE
-#else
-#define flash	0
-#define rflash	_STANDOUT
-#endif
 
 startmonst()
 {
@@ -58,7 +60,7 @@ startmonst()
 			mptr->xdpos = MBEGINX;
 			mptr->stat = RUN;
 			PLOT(MBEGINY, MBEGINX, mptr->danger ?
-				monst_names[monstnum] | flash :
+				monst_names[monstnum] | mflash :
 				runner_names[monstnum] | rflash);
 
 			/* DRIGHT or DLEFT? */
@@ -136,7 +138,7 @@ monster(mnum)
 					display[mptr->ydpos][mptr->xdpos]);
 				if (mptr->danger == TRUE)
 				{
-					PLOT(newy, newx, monst_names[mnum] | flash);
+					PLOT(newy, newx, monst_names[mnum] | mflash);
 				}
 				else if (killflg != GOTONE)
 				{

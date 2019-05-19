@@ -1,22 +1,22 @@
+/*	Copyright (c) 1984 AT&T	*/
+/*	  All Rights Reserved  	*/
+
+/*	THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF AT&T	*/
+/*	The copyright notice above does not evidence any   	*/
+/*	actual or intended publication of such source code.	*/
+
+#ident	"@(#)curses:demo/pacman/pacman.c	1.1"
 /*
-/* PACMAN  - written by Dave Nixon, AGS Computers Inc., July, 1981.
-/* Converted for curses Feb 1982 by Mark Horton.
-/*
-/* Terminal handling for video games taken from aliens
-/*      the original version  of aliens is from 
-/*      Fall 1979                      Cambridge               Jude Miller
-/*
-/* Score keeping modified and general terminal handling (termcap routines
-/* from UCB's ex) added by Rob Coben, BTL, June, 1980.
-/*
-/* If MSG is defined, the program uses the inter-process message facility
-/* of UNIX/TS Augmented to optimize reading the tty while updating the
-/* screen. Otherwise, the child process (reading the tty) writes
-/* a temporary communications file, which the parent (updating the screen)
-/* is constantly seeking to the beginning of and re-reading. (UGH!)
-/* If your system has a non-blocking read (read-without-wait), it should
-/* be implemented, and the child process could be dispensed with entirely.
-*/
+ * PACMAN  - written by Dave Nixon, AGS Computers Inc., July, 1981.
+ * Converted for curses Feb 1982 by Mark Horton.
+ *
+ * Terminal handling for video games taken from aliens
+ *      the original version  of aliens is from 
+ *      Fall 1979                      Cambridge               Jude Miller
+ *
+ * Score keeping modified and general terminal handling (termcap routines
+ * from UCB's ex) added by Rob Coben, BTL, June, 1980.
+ */
 #include <stdio.h>
 #include "pacdefs.h"
  
@@ -38,11 +38,6 @@ extern struct pac
 	monst[];
 
 extern char monst_names[];
-#ifdef A_BLINK
-# define pflash A_BLINK
-#else
-# define pflash _STANDOUT
-#endif
 
 int	pacsymb = PACMAN,
 	rounds,		/* time keeping mechanism */
@@ -57,6 +52,10 @@ int	pacsymb = PACMAN,
 	wmonst,
 	potintvl = POTINTVL,
 	potioncnt,
+	bcount = 0,
+	/* attrs: normal monster, edible monster, pacman */
+	mflash, rflash, pflash,
+	showcount,
 	treascnt = 0;
 extern
 	char *full_names[];
@@ -90,16 +89,41 @@ char **argv;
 	struct pac *mptr;
 	char gcnt[10];
 	char msgbuf[50];
+	int c;
+	extern char *optarg;
 	int chperturn = DEFCHPERTURN;
 
 	game = 0;
-	if (argc > 1) {
-		game = argv[1][0] - '0';
-		if (game < 1 || game > 3)
-			game = 0;
-		if (argc > 2)
-			chperturn = atoi(argv[2]);
-	}
+
+	pflash = A_BLINK;
+	mflash = A_BOLD;
+	rflash = A_REVERSE;
+
+	while ((c = getopt(argc, argv, "cemhpn:")) != EOF)
+		switch(c) {
+		case 'c':
+			showcount = 1;
+			break;
+		case 'e':
+			game = 1;
+			break;
+		case 'm':
+			game = 2;
+			break;
+		case 'h':
+			game = 3;
+			break;
+		case 'p':
+			mflash = pflash = rflash = 0;
+			break;
+		case 'n':
+			chperturn = atoi(optarg);
+			break;
+		default:
+			fprintf(stderr, "Usage: pacman -emh -p -n#\n");
+			exit(1);
+		}
+	
 	init();		/* global init */
 	for (pac_cnt = MAXPAC; pac_cnt > 0; pac_cnt--)
 	{
@@ -107,20 +131,21 @@ redraw:
 		erase();
 		potioncnt = 0;
 		treascnt = 0;
+		bcount = 0;
 		potion = FALSE;
 		SPLOT(0, 45, "SCORE: ");
 		(void) sprintf(msgbuf, "GAME: %s",	game==1 ? "EASY" :
 							game==2 ? "MEDIUM" :
 								  "HARD");
 		SPLOT(0, 65, msgbuf);
-		SPLOT(21, 45, "gold left = ");
+		SPLOT(21, 45, "food left = ");
 		(void) sprintf(gcnt, "%6d", goldcnt);
 		SPLOT(21, 57, gcnt);
 
 		/*
 		 * We update the monsters every monst_often turns, to keep
 		 * the CRT caught up with the computer.  The fudge factor
-		 * was calculated from the assumption that each full refresh
+		 * was calculated from the assumption that each full syncscreen
 		 * outputs chperturn characters.  The default is pessimistic
 		 * based on ANSI and HP terminals w/verbose cursor addressing.
 		 */
@@ -138,7 +163,7 @@ redraw:
 		pacsymb = PACMAN;
 		killflg = FALSE;
 		(void) sprintf(message,
-			"delay = %3d, refresh = %3d", delay, monst_often);
+			"delay = %3d, syncscreen = %3d", delay, monst_often);
 		SPLOT(22, 45, message);
 		/*
 		 * PLOT maze
@@ -172,7 +197,7 @@ redraw:
 		};
 		rounds = 0;	/* timing mechanism */
 		update();
-		refresh();
+		syncscreen();
 		tries = 0;
 		while ((pacptr->dirn == NULL) && (tries++ < 300))
 		{
@@ -228,13 +253,16 @@ redraw:
 					}
 				}
 			}
+			if (bcount && --bcount == 0) {
+				SPLOT(7,45,"                   ");
+			}
 			if (treascnt && --treascnt == 0) {
 				display[TRYPOS][TRXPOS] = VACANT;
 				PLOT(TRYPOS, TRXPOS, VACANT);
 			}
 			if (rounds % monst_often == 0)
 				update();	/* score display etc */
-			refresh();
+			syncscreen();
 			if (goldcnt <= 0)
 			{
 				potintvl -= 5;
@@ -247,12 +275,13 @@ redraw:
 		sprintf(msgbuf, "Oops!  %s got you!\n", full_names[wmonst]);
 		SPLOT(5, 45, msgbuf);
 		flushinp();
-		refresh();
+		syncscreen();
 		sleep(2);
 	}
 	SPLOT(8, 45, "THE MONSTERS ALWAYS TRIUMPH");
 	SPLOT(9, 45, "IN THE END!");
 	update();
+	syncscreen();
 	over();
 }
 
@@ -263,13 +292,22 @@ pacman()
 	register int tmpx, tmpy;
 	int deltat;
 	struct pac *mptr;
+	int bscore;
+	char msgbuf[50];
 
-	refresh();
+	syncscreen();
 
-	/* pause; wait for the player to hit a key */
+	/* pause; this is the main delay on each turn */
 	napms(delay);
 
-	/* get instructions from player, but don't wait */
+	/*
+	 * Wait until .1 seconds or less of output in queue.
+	 * This is to make it work better on verbose terminals
+	 * at 1200 baud.
+	 */
+	draino(100);
+
+	/* get command from player, but don't wait */
 	poll(0);
 
 	/* remember current pacman position */
@@ -400,14 +438,18 @@ pacman()
 	case TREASURE:
 		switch (boardcount) {
 			case 0:
-			case 1:          pscore +=  100; break;
-			case 2:          pscore +=  200; break;
-			case 3: case  4: pscore +=  500; break;
-			case 5: case  6: pscore +=  700; break;
-			case 7: case  8: pscore += 1000; break;
+			case 1:          bscore =  100; break;
+			case 2:          bscore =  200; break;
+			case 3: case  4: bscore =  500; break;
+			case 5: case  6: bscore =  700; break;
+			case 7: case  8: bscore = 1000; break;
 			default:
-			case 9: case 10: pscore += 2000; break;
+			case 9: case 10: bscore = 2000; break;
 		}
+		pscore += bscore;
+		sprintf(msgbuf, "BONUS: %4d", bscore);
+		SPLOT(7, 45, msgbuf);
+		bcount = BINTVL;
 		break;
 
 	case POTION:
@@ -440,4 +482,5 @@ pacman()
 	{
 		PLOT(pacptr->ypos, pacptr->xpos, pacsymb | pflash);
 	};
+	syncscreen();
 }

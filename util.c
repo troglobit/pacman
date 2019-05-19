@@ -1,6 +1,15 @@
+/*	Copyright (c) 1984 AT&T	*/
+/*	  All Rights Reserved  	*/
+
+/*	THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF AT&T	*/
+/*	The copyright notice above does not evidence any   	*/
+/*	actual or intended publication of such source code.	*/
+
+#ident	"@(#)curses:demo/pacman/util.c	1.1"
 #include "pacdefs.h"
 #include <signal.h>
 #include <pwd.h>
+#include <term.h>
 
 extern char
 	*mktemp();
@@ -8,12 +17,15 @@ extern char
 extern int
 	delay,
 	errno,
+	game,
 	wmonst,
 	boardcount,
 	rounds,
 	monsthere,
 	potintvl,
 	treascnt,
+	bcount,
+	showcount,
 	goldcnt;
 
 extern long
@@ -130,13 +142,13 @@ char	display[BRDY][BRDX] =
 "#######################################",
 };
 
-char	combuf[BUFSIZ],
-	message[81],	/* temporary message buffer */
+int	incharbuf;
+int	bufstat;
+char	message[81],	/* temporary message buffer */
 	inbuf[2];
 
 int	ppid,
 	cpid,
-	game,
 	killcnt = 0,
 	vs_rows,
 	vs_cols;
@@ -161,6 +173,11 @@ struct scorebrd
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	};
+
+syncscreen()
+{
+	refresh();
+}
 
 update()
 {
@@ -207,6 +224,7 @@ dokill(mnum)
 {
 	register struct pac *mptr;
 	char msgbuf[50];
+	int bscore;
 
 	beep();
 	if (monst[mnum].danger == FALSE)
@@ -234,11 +252,15 @@ dokill(mnum)
 		monsthere++;
 		rounds = 1;	/* force it to be a while before he comes out */
 		switch (monsthere) {
-		case 1: pscore +=     KILLSCORE; break;
-		case 2: pscore += 2 * KILLSCORE; break;
-		case 3: pscore += 4 * KILLSCORE; break;
-		case 4: pscore += 8 * KILLSCORE; break;
+		case 1: bscore =     KILLSCORE; break;
+		case 2: bscore = 2 * KILLSCORE; break;
+		case 3: bscore = 4 * KILLSCORE; break;
+		case 4: bscore = 8 * KILLSCORE; break;
 		}
+		pscore += bscore;
+		bcount = BINTVL;
+		sprintf(msgbuf, "BONUS: %4d", bscore);
+		SPLOT(7, 45, msgbuf);
 		sprintf(msgbuf, "You got %s!\n", full_names[mnum]);
 		SPLOT(4, 45, msgbuf);
 		return(GOTONE);
@@ -291,7 +313,7 @@ instruct()
 	printw("        Type:   1       easy game\n");
 	printw("                2       intelligent monsters\n");
 	printw("                3       very intelligent monsters\n");
-	refresh();
+	syncscreen();
 }
 
 /*
@@ -305,9 +327,8 @@ over()
 	int scorefile = 0;
 	struct passwd *getpwuid(), *p;
 
-	refresh();
+	syncscreen();
 	signal(SIGINT, SIG_IGN);
-	/* clr(); */
 	/* high score to date processing */
 	if (game != 0)
 	{
@@ -354,7 +375,6 @@ over()
 		}
 		else
 		{
-			/* clr(); */
 			POS(line++, col);
 			(void) printw("|                           |");
 			POS(line++, col);
@@ -367,7 +387,7 @@ over()
 		POS(line, col);
 		(void) printw("|___________________________|");
 	};
-	refresh();
+	syncscreen();
 	leave();
 }
 
@@ -377,8 +397,9 @@ over()
 
 leave()
 {
+	leaveok(stdscr, FALSE);
 	POS(23, 0);
-	refresh();
+	syncscreen();
 	endwin();
 	exit(0);
 }
@@ -394,9 +415,6 @@ init()
 	static int lastchar = DELETE;
 	extern short ospeed;		/* baud rate for crt (for tputs()) */
 	int over();
-#ifdef USG
-	struct termio t;
-#endif
 
 	errno = 0;
 	(void) time(&timein);	/* get start time */
@@ -410,15 +428,10 @@ init()
 	crmode();
 	nonl();
 	leaveok(stdscr, TRUE);
+	keypad(stdscr, TRUE);
+	nodelay(stdscr, TRUE);
 	vs_rows = LINES;
 	vs_cols = COLS;
-
-#ifdef USG
-	ioctl(0, TCGETA, &t);
-	t.c_cc[VTIME] = 0;
-	t.c_cc[VMIN] = 0;
-	ioctl(0, TCSETA, &t);
-#endif
 
 	if (delay == 0)
 		delay = 500;	/* number of ticks per turn */
@@ -450,49 +463,23 @@ init()
 poll(sltime)
 {
 	int stop;
-	register int charcnt;
-	int junk;
+	int c;
 
 	stop = 0;
 readin:
 
-	refresh();
-	/* Check for input we've seen but not processed */
-	if (combuf[1] == FULL)
-		charcnt = 1;
-	else
-		charcnt = 0;
-#ifdef FIONREAD
-	/* Check for typeahead on 4BSD systems. */
-	if (charcnt <= 0) {
-		ioctl(0, FIONREAD, &junk);
-		if (junk)
-			charcnt = read(0, combuf, 1);
+	syncscreen();
+	if (bufstat == EMPTY) {
+		c = getch();
+		if (c < 0) {
+			bufstat = EMPTY;
+		} else {
+			bufstat = FULL;
+			incharbuf = c;
+		}
 	}
-#else
-	/* Have to try a read if nothing else worked. */
-	if (charcnt <= 0)
-		charcnt = read(0, combuf, 1);
-#endif
 
-	switch (charcnt)
-	{
-
-	case 0:
-		combuf[1] = EMPTY;
-		break;
-
-	case -1:
-		errgen("READ ERROR IN POLL");
-		abort();
-
-	default:
-		combuf[0] = combuf[charcnt-1];
-		combuf[1] = FULL;
-		break;
-	};
-
-	if (combuf[1] == EMPTY) 
+	if (bufstat == EMPTY) 
 	{
 		if (stop)
 		{
@@ -500,34 +487,42 @@ readin:
 		};
 		return;
 	};
-	combuf[1] = EMPTY;
+	bufstat = EMPTY;
 
-	switch(combuf[0] & 0177)
+	switch(incharbuf)
 	{
 	case LEFT:
+	case NLEFT:
+	case KEY_LEFT:
 		pacptr->dirn = DLEFT;
 		break;
 
 	case RIGHT:
+	case NRIGHT:
+	case KEY_RIGHT:
 		pacptr->dirn = DRIGHT;
 		break;
 
 	case NORTH:
 	case NNORTH:
+	case KEY_UP:
 		pacptr->dirn = DUP;
 		break;
 
 	case DOWN:
 	case NDOWN:
+	case KEY_DOWN:
 		pacptr->dirn = DDOWN;
 		break;
 
 	case HALT:
+	case KEY_HOME:
 		pacptr->dirn = DNULL;
 		break;
 
 	case REDRAW:
 		clearok(curscr, TRUE);
+		draino(0);
 		break;
 
 	case ABORT:
@@ -536,20 +531,27 @@ readin:
 		over();
 		break;
 
-	case CNTLS:
+	case 'S':
 		stop = 1;
 		goto readin;
 
+	case 'G':
+		stop = 0;
+		goto readin;
+
 	case GAME1:
-		game = 1;
+		if (game == 0)
+			game = 1;
 		break;
 
 	case GAME2:
-		game = 2;
+		if (game == 0)
+			game = 2;
 		break;
 
 	case GAME3:
-		game = 3;
+		if (game == 0)
+			game = 3;
 		break;
 
 	default:
@@ -566,6 +568,8 @@ getrand(range)
 	return(q % range);
 }
 
+#define FIRSTMSGLINE	13
+#define LASTMSGLINE	13
 /*
  * This function is convenient for debugging pacman.  It isn't used elsewhere.
  * It's like printf and prints in a window on the right hand side of the screen.
@@ -575,213 +579,10 @@ char *fmt;
 int arg1, arg2, arg3, arg4;
 {
 	char msgbuf[100];
-	static char msgline = 13;
+	static char msgline = FIRSTMSGLINE;
 
 	sprintf(msgbuf, fmt, arg1, arg2, arg3, arg4);
 	SPLOT(msgline, 45, msgbuf);
-	if (msgline++ > 20)
-		msgline = 13;
+	if (++msgline > LASTMSGLINE)
+		msgline = FIRSTMSGLINE;
 }
-
-/*
- * napms.  Sleep for ms milliseconds.  We don't expect a particularly good
- * resolution - 60ths of a second is normal, 10ths might even be good enough,
- * but the rest of the program thinks in ms because the unit of resolution
- * varies from system to system.  (In some countries, it's 50ths, for example.)
- *
- * If you're thinking of replacing this with a call to sleep, or by outputting
- * some pad characters, forget it.  You won't get a decent game.  You absolutely
- * HAVE to have a fraction-of-a-second sleep.  Sleeping for a full second will
- * make the game seem really slow.  Outputting pad characters will cause the
- * keyboard to be ahead of the display by whatever buffering the tty driver
- * does, typically about one second.  This causes you to have to anticipate
- * your moves and also makes response dependent on system load - in general
- * the game will be crummy.
- *
- * Here are some reasonable ways to get a good nap.
- *
- * (1) Use the select (dselect?) system call in Berkeley 4.2BSD.
- *
- * (2) Use the 1/10th second resolution wait in the UNIX 3.0 tty driver.
- *     (This is untested - rumor has it that this feature does not work
- *     as advertised, and there might also be problems with the user hitting
- *     a key too soon.)
- *
- * (3) Install the ft (fast timer) device in your kernel.
- *     This is a psuedo-device to which an ioctl will wait n ticks
- *     and then send you an alarm.
- *
- * (4) Install the nap system call in your kernel.
- *     This system call does a timeout for the requested number of ticks.
- */
-#ifdef SELECT
-napms(ms)
-int ms;
-{
-	select(0, 0, 0, ms);
-}
-#endif
-
-#if FTIOCSET || NAPSYSCALL
-/*
- * Pause for ms milliseconds.  Convert to ticks and wait that long.
- * the constant 6 is HZ/10, change it to 5 for 50 HZ systems.
- * Call nap, which is either defined below or a system call.
- */
-napms(ms)
-int ms;
-{
-	int ticks = ms * 6 / 100;
-	if (ticks <= 0)
-		ticks = 1;
-	nap(ticks);	/* call either the code below or nap system call */
-}
-#endif
-
-#ifdef FTIOCSET
-/*
- * This uses the ft device.
- * The following code is adapted from the sleep code in libc.
- * It uses the "fast timer" device posted to USENET in Feb 1982.
- * nap is like sleep but the units are ticks (e.g. 1/60ths of
- * seconds in the USA).
- */
-#include <setjmp.h>
-static jmp_buf jmp;
-static int ftfd;
-
-nap(n)
-unsigned n;
-{
-	int napx();
-	unsigned altime;
-	int (*alsig)() = SIG_DFL;
-	char *ftname;
-	struct requestbuf {
-		short time;
-		short signo;
-	} rb;
-
-	if (ftfd <= 0) {
-		ftname = "/dev/ft0";
-		while (ftfd <= 0) {
-			ftfd = open(ftname, 0);
-			if (ftfd <= 0)
-				ftname[7] ++;
-		}
-	}
-	if (n==0)
-		return;
-	altime = alarm(1000);	/* time to maneuver */
-	if (setjmp(jmp)) {
-		signal(SIGALRM, alsig);
-		alarm(altime);
-		return;
-	}
-	if (altime) {
-		if (altime > n)
-			altime -= n;
-		else {
-			n = altime;
-			altime = 1;
-		}
-	}
-	alsig = signal(SIGALRM, napx);
-	rb.time = n;
-	rb.signo = SIGALRM;
-	ioctl(ftfd, FTIOCSET, &rb);
-	for(;;)
-		pause();
-	/*NOTREACHED*/
-}
-
-static
-napx()
-{
-	longjmp(jmp, 1);
-}
-#endif
-
-#ifdef USG
-#define IDLETTY "/dev/idletty"
-/*
- * Do it with the timer in the tty driver.  Resolution is only 1/10th
- * of a second.  Problem is, if the user types something while we're
- * sleeping, we wake up immediately, and have no way to tell how long
- * we should sleep again.  So we're sneaky and use a tty which we are
- * pretty sure nobody is using.
- *
- * This requires some care.  If you choose a tty that is a dialup or
- * which otherwise can show carrier, it will hang and you won't get
- * any response from the keyboard.  You can use /dev/tty if you have
- * no such tty, but response will feel funny as described above.
- */
-napms(ms)
-int ms;
-{
-	struct termio t, ot;
-	static int ttyfd;
-	int n, tenths;
-	char c;
-
-	if (ttyfd == 0)
-		ttyfd = open(IDLETTY, 2);
-	if (ttyfd < 0) {
-		fprintf(stderr, "Need read/write permission on %s\r\n",
-				IDLETTY);
-		leave();
-	}
-	tenths = (ms+50) / 100;
-	ioctl(ttyfd, TCGETA, &t);
-	ot = t;
-	t.c_cflag &= ~ICANON;
-	t.c_cc[VMIN] = 0;
-	t.c_cc[VTIME] = tenths;
-	ioctl(ttyfd, TCSETA, &t);
-	n = read(ttyfd, &c, 1);
-	if (n > 0) {
-		combuf[0] = c;
-		combuf[1] = FULL;
-	}
-	ioctl(ttyfd, TCSETA, &ot);
-}
-#endif
-
-#ifndef A_BLINK
-/* Simulations for the old curses */
-flushinp()
-{
-#ifdef USG
-	ioctl(0, TCFLSH, 0);
-#else
-	ioctl(0, TIOCFLUSH, 0);
-#endif
-}
-
-beep()
-{
-	putchar('\7');
-	fflush(stdout);
-}
-
-baudrate()
-{
-	int baud;
-
-#ifdef USG
-	baud = _tty.c_cflag & CBAUD;
-#else
-	baud = _tty.sg_ospeed;
-#endif
-	switch (baud) {
-	case B110: return 110;
-	case B300: return 300;
-	case B1200: return 1200;
-	case B2400: return 2400;
-	case B4800: return 4800;
-	case B9600: return 9600;
-	case EXTA: return 19200;
-	}
-	return 9600;	/* Guess */
-}
-#endif

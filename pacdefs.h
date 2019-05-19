@@ -1,3 +1,11 @@
+/*	Copyright (c) 1984 AT&T	*/
+/*	  All Rights Reserved  	*/
+
+/*	THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF AT&T	*/
+/*	The copyright notice above does not evidence any   	*/
+/*	actual or intended publication of such source code.	*/
+
+#ident	"@(#)curses:demo/pacman/pacdefs.h	1.1"
 #include <curses.h>
 /* dfp #define POS(row,col)    fputs(tgoto(vs_cm,(col),(row)),stdout)*/
 /* #define POS(row,col)	tputs(tgoto(vs_cm,(col),(row)),1,putch) */
@@ -14,8 +22,8 @@
 #define MGTYPE	3	/* Maximum game types */
 #define	MAXPAC	3	/* maximum number of pacmen to start */
 #define	MAXMONSTER	4	/* max number of monsters */
-#define EMPTY	'E'
-#define FULL	'F'
+#define EMPTY	0
+#define FULL	1
 #define LEFT	'h'
 #define NLEFT	's'
 #define RIGHT	'l'
@@ -75,6 +83,8 @@
 
 #define	MSTARTINTVL	10
 #define	POTINTVL	25
+#define BINTVL		10
+
 #define GOLDCNT	185
 #define CUP	'|'
 #define CDOWN	'|'

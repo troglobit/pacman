@@ -1,3 +1,11 @@
+/*	Copyright (c) 1984 AT&T	*/
+/*	  All Rights Reserved  	*/
+
+/*	THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF AT&T	*/
+/*	The copyright notice above does not evidence any   	*/
+/*	actual or intended publication of such source code.	*/
+
+#ident	"@(#)curses:demo/pacman/movie.c	1.1"
 /*
  * "Movie" routine for Mark Horton's version of PACMAN which uses the
  *  curses library stuff.  You could probably diddle with it a little
@@ -32,7 +40,7 @@ movie()
 	int i, j, k;
 
 	clear();
-	refresh();
+	syncscreen();
 
 	/*
 	 * this loop moves the monster and the small pacman from right to 
@@ -48,7 +56,7 @@ movie()
 		else {
 			SPLOT(13, 1, " ");
 		}
-		refresh();
+		syncscreen();
 	}
 
 	/*
@@ -93,36 +101,36 @@ movie()
 				break;
 			}
 		}
-		refresh();
+		syncscreen();
 	}
 	/*
 	 * right1-right9 are partial monster routines, for moving him off to 
 	 * the right of the screen.  monst4 prints the whole pacman.
 	 */
-	right1(); monst4(50); refresh();
-	right2(); monst4(51); refresh();
-	right3(); monst4(52); refresh();
-	right4(); monst4(53); refresh();
-	right5(); monst4(54); refresh();
-	right6(); monst4(55); refresh();
-	right7(); monst4(56); refresh();
-	right8(); monst4(57); refresh();
-	right9(); monst4(58); refresh();
+	right1(); monst4(50); syncscreen();
+	right2(); monst4(51); syncscreen();
+	right3(); monst4(52); syncscreen();
+	right4(); monst4(53); syncscreen();
+	right5(); monst4(54); syncscreen();
+	right6(); monst4(55); syncscreen();
+	right7(); monst4(56); syncscreen();
+	right8(); monst4(57); syncscreen();
+	right9(); monst4(58); syncscreen();
 
 	/* Now finish moving the pacman to the end of the screen.  */
 	for (i=59; i < 74; i++) {
 		monst4(i);
-		refresh();
+		syncscreen();
 	}
 
 	/* monst5-monst7 print pieces of pacman as he moves off the screen */
-	monst5(74); refresh();
-	monst6(75); refresh();
-	monst7(76); refresh();
+	monst5(74); syncscreen();
+	monst6(75); syncscreen();
+	monst7(76); syncscreen();
 
 	/* clean up a little bit */
 	clear();
-	refresh();
+	syncscreen();
 }
 left1()
 {
@@ -130,7 +138,7 @@ left1()
 	SPLOT(11, 0, "     \\   \n");
 	SPLOT(12, 0, " O O |   \n"); 
 	SPLOT(13, 0, "^v^v^v   \n");
-	refresh();
+	syncscreen();
 }
 left2()
 {
@@ -138,7 +146,7 @@ left2()
 	SPLOT(11, 0, "    \\   \n");
 	SPLOT(12, 0, "O O |   \n"); 
  	SPLOT(13, 0, "v^v^v   \n");
-	refresh();
+	syncscreen();
 }
 left3()
 {
@@ -146,7 +154,7 @@ left3()
 	SPLOT(11, 0, "   \\   \n");
 	SPLOT(12, 0, " O |   \n"); 
 	SPLOT(13, 0, "^v^v   \n");
-	refresh();
+	syncscreen();
 }
 left4()
 {
@@ -154,7 +162,7 @@ left4()
 	SPLOT(11, 0, "  \\   \n");
 	SPLOT(12, 0, "O |   \n"); 
 	SPLOT(13, 0, "v^v   \n");
-	refresh();
+	syncscreen();
 }
 left5()
 {
@@ -162,7 +170,7 @@ left5()
 	SPLOT(11, 0, " \\   \n");
 	SPLOT(12, 0, " |   \n"); 
 	SPLOT(13, 0, "^v   \n");
-	refresh();
+	syncscreen();
 }
 left6()
 {
@@ -170,7 +178,7 @@ left6()
 	SPLOT(11, 0, "\\   \n");
 	SPLOT(12, 0, "|   \n"); 
 	SPLOT(13, 0, "v   \n");
-	refresh();
+	syncscreen();
 }
 left7()
 {
@@ -178,7 +186,7 @@ left7()
 	SPLOT(11, 0, "   \n");
 	SPLOT(12, 0, "   \n"); 
 	SPLOT(13, 0, "   \n");
-	refresh();
+	syncscreen();
 }
 right1()
 {
