@@ -315,8 +315,9 @@ void over(int signo)
 	register int i;
 	register int line, col;
 	int scorefile = 0;
-	struct passwd *getpwuid(), *p;
+	struct passwd *p;
 
+	(void)signo;
 	syncscreen();
 	signal(SIGINT, SIG_IGN);
 	/* high score to date processing */
@@ -470,6 +471,7 @@ int sltime;
 	int stop;
 	int c;
 
+	(void)sltime;
 	stop = 0;
 readin:
 
