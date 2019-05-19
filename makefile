@@ -10,7 +10,7 @@
 #ident	"@(#)curses:demo/pacman/makefile	1.3"
 CC =	cc
 DFLAGS =
-CFLAGS =	-O
+CFLAGS =	-W -Wall -Wextra -g -O2
 LDFLAGS =
 CFILES =	pacman.c monster.c util.c movie.c
 OFILES =	pacman.o monster.o util.o movie.o
