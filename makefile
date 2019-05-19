@@ -1,28 +1,38 @@
 CC =	cc
-CFLAGS =	-O -DNODELAY
-CFILES =	pacman.c monster.c util.c
-OFILES =	pacman.o monster.o util.o
+# DFLAGS =	-DUSG -DNODELAY
+DFLAGS =	-DNODELAY -DMINICURSES
+CFLAGS =	-O
+LDFLAGS =
+CFILES =	pacman.c monster.c util.c movie.c
+OFILES =	pacman.o monster.o util.o movie.o
 
-pacr:	$(OFILES)
-	$(CC) -o pacr $(OFILES) -ltermlib -lcurses
+pacman:	$(OFILES)
+	$(CC) $(LDFLAGS) -o pacman $(OFILES) -lcurses
 
 pacman.o:	pacman.c pacdefs.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) pacman.c
 
 monster.o:	monster.c pacdefs.h
-	$(CC) -c $(CFLAGS)  $(DFLAGS) monster.c
+	$(CC) -c $(CFLAGS) $(DFLAGS) monster.c
 
 util.o:	util.c pacdefs.h
-	$(CC) -c $(CFLAGS)  $(DFLAGS) util.c
+	$(CC) -c $(CFLAGS) $(DFLAGS) util.c
+
+movie.o:	movie.c pacdefs.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) movie.c
 
 
-install:	pacr
-	strip pacr
-	mv pacr /usr/games/pacman
+install:	pacman
+	cp pacman /usr/games/pacman
 
+strip:	pacman
+	strip pacman
 
-clean:
-	rm -f *.o pacr
+shrink:
+	-rm -f *.o
+
+clean:	shrink
+	-rm -f pacman errs core a.out
 
 lint:	$(CFILES)
 	lint -pc $(CFILES)

@@ -1,35 +1,19 @@
-#include <stdio.h>
-#include <signal.h>
-#ifdef BELL3.0
-#include <fcntl.h>
-#include <termio.h>
-#else
-#include <sgtty.h>
-#endif
-#include <pwd.h>
 #include "pacdefs.h"
-
-#ifndef BELL3.0
-#define	O_RDWR	2
-#define	O_CREAT 0
-#define	O_RDONLY 0
-#define	O_NDELAY 0
-#endif
+#include <signal.h>
+#include <pwd.h>
 
 extern char
-	*BC,
-	*UP;
-
-extern int
-	putch();
-
-extern char
-	*tgoto(),
 	*mktemp();
 
 extern int
 	delay,
 	errno,
+	wmonst,
+	boardcount,
+	rounds,
+	monsthere,
+	potintvl,
+	treascnt,
 	goldcnt;
 
 extern long
@@ -41,24 +25,8 @@ extern struct pac
 extern struct pac
 	monst[];
 
-#ifndef MSG
-int	comfile;
-#else
-struct mstruct
-{
-	int     frompid;
-	int     mtype;
-};
-
-#endif
-
-#ifndef NODELAY
-
-#ifndef MSG
-char	*fnam;
-#endif
-
-#endif
+extern char monst_names[];
+extern char *full_names[];
 
 /*
  * initbrd is used to re-initialize the display
@@ -66,29 +34,29 @@ char	*fnam;
  */
 char	initbrd[BRDY][BRDX] =
 {
-"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
-"O + + + * + + + + OOO + + + + * + + + O",
-"O X OOO + OOOOO + OOO + OOOOO + OOO X O",
-"O * + + * + * + * + + * + * + * + + * O",
-"O + OOO + O + OOOOOOOOOOO + O + OOO + O",
-"O + + + * O + + + OOO + + + O * + + + O",
-"OOOOOOO + OOOOO + OOO + OOOOO + OOOOOOO",
-"      O + O + + * + + * + + O + O      ",
-"      O + O + OOO - - OOO + O + O      ",
-"OOOOOOO + O + O         O + O + OOOOOOO",
-"        * + * O         O * + *        ",
-"OOOOOOO + O + O         O + O + OOOOOOO",
-"      O + O + OOOOOOOOOOO + O + O      ",
-"      O + O * + + + + + + * O + O      ",
-"OOOOOOO + O + OOOOOOOOOOO + O + OOOOOOO",
-"O + + + * + * + + OOO + + * + * + + + O",
-"O X OOO + OOOOO + OOO + OOOOO + OOO X O",
-"O + + O * + * + * + + * + * + * O + + O",
-"OOO + O + O + OOOOOOOOOOO + O + O + OOO",
-"O + * + + O + + + OOO + + + O + + * + O",
-"O + OOOOOOOOOOO + OOO + OOOOOOOOOOO + O",
-"O + + + + + + + * + + * + + + + + + + O",
-"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+"#######################################",
+"# . . . * . . . . ### . . . . * . . . #",
+"# O ### . ##### . ### . ##### . ### O #",
+"# * . . * . * . * . . * . * . * . . * #",
+"# . ### . # . ########### . # . ### . #",
+"# . . . * # . . . ### . . . # * . . . #",
+"####### . ##### . ### . ##### . #######",
+"      # . # . . * . . * . . # . #      ",
+"      # . # . ### - - ### . # . #      ",
+"####### . # . #         # . # . #######",
+"        * . * #         # * . *        ",
+"####### . # . #         # . # . #######",
+"      # . # . ########### . # . #      ",
+"      # . # * . . . . . . * # . #      ",
+"####### . # . ########### . # . #######",
+"# . . . * . * . . ### . . * . * . . . #",
+"# O ### . ##### . ### . ##### . ### O #",
+"# . . # * . * . * . . * . * . * # . . #",
+"### . # . # . ########### . # . # . ###",
+"# . * . . # . . . ### . . . # . . * . #",
+"# . ########### . ### . ########### . #",
+"# . . . . . . . * . . * . . . . . . . #",
+"#######################################",
 };
 
 /*
@@ -106,29 +74,29 @@ char	initbrd[BRDY][BRDX] =
  */
 char	brd[BRDY][BRDX] =
 {
-"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
-"O + + + * + + + + OOO + + + + * + + + O",
-"O X OOO + OOOOO + OOO + OOOOO + OOO X O",
-"O * + + * + * + * + + * + * + * + + * O",
-"O + OOO + O + OOOOOOOOOOO + O + OOO + O",
-"O + + + * O + + + OOO + + + O * + + + O",
-"OOOOOOO + OOOOO + OOO + OOOOO + OOOOOOO",
-"      O + O + + * + + * + + O + O      ",
-"      O + O + OOO - - OOO + O + O      ",
-"OOOOOOO + O + O         O + O + OOOOOOO",
-"        * + * O         O * + *        ",
-"OOOOOOO + O + O         O + O + OOOOOOO",
-"      O + O + OOOOOOOOOOO + O + O      ",
-"      O + O * + + + + + + * O + O      ",
-"OOOOOOO + O + OOOOOOOOOOO + O + OOOOOOO",
-"O + + + * + * + + OOO + + * + * + + + O",
-"O X OOO + OOOOO + OOO + OOOOO + OOO X O",
-"O + + O * + * + * + + * + * + * O + + O",
-"OOO + O + O + OOOOOOOOOOO + O + O + OOO",
-"O + * + + O + + + OOO + + + O + + * + O",
-"O + OOOOOOOOOOO + OOO + OOOOOOOOOOO + O",
-"O + + + + + + + * + + * + + + + + + + O",
-"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+"#######################################",
+"# . . . * . . . . ### . . . . * . . . #",
+"# O ### . ##### . ### . ##### . ### O #",
+"# * . . * . * . * . . * . * . * . . * #",
+"# . ### . # . ########### . # . ### . #",
+"# . . . * # . . . ### . . . # * . . . #",
+"####### . ##### . ### . ##### . #######",
+"      # . # . . * . . * . . # . #      ",
+"      # . # . ### - - ### . # . #      ",
+"####### . # . #         # . # . #######",
+"        * . * #         # * . *        ",
+"####### . # . #         # . # . #######",
+"      # . # . ########### . # . #      ",
+"      # . # * . . . . . . * # . #      ",
+"####### . # . ########### . # . #######",
+"# . . . * . * . . ### . . * . * . . . #",
+"# O ### . ##### . ### . ##### . ### O #",
+"# . . # * . * . * . . * . * . * # . . #",
+"### . # . # . ########### . # . # . ###",
+"# . * . . # . . . ### . . . # . . * . #",
+"# . ########### . ### . ########### . #",
+"# . . . . . . . * . . * . . . . . . . #",
+"#######################################",
 };
 
 /*
@@ -137,35 +105,30 @@ char	brd[BRDY][BRDX] =
  */
 char	display[BRDY][BRDX] =
 {
-"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
-"O + + + + + + + + OOO + + + + + + + + O",
-"O X OOO + OOOOO + OOO + OOOOO + OOO X O",
-"O + + + + + + + + + + + + + + + + + + O",
-"O + OOO + O + OOOOOOOOOOO + O + OOO + O",
-"O + + + + O + + + OOO + + + O + + + + O",
-"OOOOOOO + OOOOO + OOO + OOOOO + OOOOOOO",
-"      O + O + + + + + + + + O + O      ",
-"      O + O + OOO - - OOO + O + O      ",
-"OOOOOOO + O + O         O + O + OOOOOOO",
-"        + + + O         O + + +        ",
-"OOOOOOO + O + O         O + O + OOOOOOO",
-"      O + O + OOOOOOOOOOO + O + O      ",
-"      O + O + + + + + + + + O + O      ",
-"OOOOOOO + O + OOOOOOOOOOO + O + OOOOOOO",
-"O + + + + + + + + OOO + + + + + + + + O",
-"O X OOO + OOOOO + OOO + OOOOO + OOO X O",
-"O + + O + + + + + + + + + + + + O + + O",
-"OOO + O + O + OOOOOOOOOOO + O + O + OOO",
-"O + + + + O + + + OOO + + + O + + + + O",
-"O + OOOOOOOOOOO + OOO + OOOOOOOOOOO + O",
-"O + + + + + + + + + + + + + + + + + + O",
-"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+"#######################################",
+"# . . . . . . . . ### . . . . . . . . #",
+"# O ### . ##### . ### . ##### . ### O #",
+"# . . . . . . . . . . . . . . . . . . #",
+"# . ### . # . ########### . # . ### . #",
+"# . . . . # . . . ### . . . # . . . . #",
+"####### . ##### . ### . ##### . #######",
+"      # . # . . . . . . . . # . #      ",
+"      # . # . ### - - ### . # . #      ",
+"####### . # . #         # . # . #######",
+"        . . . #         # . . .        ",
+"####### . # . #         # . # . #######",
+"      # . # . ########### . # . #      ",
+"      # . # . . . . . . . . # . #      ",
+"####### . # . ########### . # . #######",
+"# . . . . . . . . ### . . . . . . . . #",
+"# O ### . ##### . ### . ##### . ### O #",
+"# . . # . . . . . . . . . . . . # . . #",
+"### . # . # . ########### . # . # . ###",
+"# . . . . # . . . ### . . . # . . . . #",
+"# . ########### . ### . ########### . #",
+"# . . . . . . . . . . . . . . . . . . #",
+"#######################################",
 };
-
-/* terminal type from environment and /etc/termcap ala ex & vi */
-char    *vs_cl  = "",           /* clear screen sequence */
-	*vs_cm  = "",           /* cursor positioning sequence */
-	*vs_vb  = "";
 
 char	combuf[BUFSIZ],
 	message[81],	/* temporary message buffer */
@@ -183,15 +146,6 @@ unsigned
 
 long	timein;
 
-#ifdef BELL3.0
-struct termio
-	savetty,
-	newtty;
-#else
-struct sgttyb
-	savetty, newtty;
-#endif
-
 struct uscore
 {
 	unsigned score;	/* same type as pscore */
@@ -206,16 +160,15 @@ struct scorebrd
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	};
 
 update()
 {
 	char	str[10];
 
-	(void) sprintf(str, "%6d", pscore);
+	sprintf(str, "%6d", pscore);
 	SPLOT(0, 52, str);
-	(void) sprintf(str, "%6d", goldcnt);
+	sprintf(str, "%6d", goldcnt);
 	SPLOT(21, 57, str);
 }
 
@@ -224,6 +177,8 @@ reinit()
 	register int locx, locy;
 	register char tmp;
 
+	if (boardcount % 2 == 0)
+		movie();
 	for (locy = 0; locy < BRDY; locy++)
 	{
 		for (locx = 0; locx < BRDX; locx++)
@@ -237,7 +192,8 @@ reinit()
 		};
 	};
 	goldcnt = GOLDCNT;
-	delay -= (delay / 10);	/* hot it up */
+	delay = delay * 3 / 4;	/* hot it up */
+	boardcount++;
 }
 
 errgen(string)
@@ -250,9 +206,10 @@ dokill(mnum)
 	int mnum;
 {
 	register struct pac *mptr;
+	char msgbuf[50];
 
-	PLOT(0, 0, BEEP);
-	if (pacptr->danger == TRUE)
+	beep();
+	if (monst[mnum].danger == FALSE)
 	{
 		if (++killcnt == MAXMONSTER)
 		{
@@ -263,18 +220,30 @@ dokill(mnum)
 			display[TRYPOS][TRXPOS] = TREASURE;
 			PLOT(TRYPOS, TRXPOS, TREASURE);
 			killcnt = 0;
-		};
+			treascnt = potintvl;
+		}
 		SPLOT(5, 45, "MONSTERS KILLED: ");
 		(void) sprintf(message, "%1d", killcnt);
 		SPLOT(5, 62, message);
 		mptr = (&monst[mnum]);
 		mptr->ypos = MSTARTY;
 		mptr->xpos = MSTARTX + (2 * mnum);
+		mptr->danger = TRUE;
 		mptr->stat = START;
-		PLOT(mptr->ypos, mptr->xpos, MONSTER);
-		pscore += KILLSCORE;
+		PLOT(mptr->ypos, mptr->xpos, monst_names[mnum]);
+		monsthere++;
+		rounds = 1;	/* force it to be a while before he comes out */
+		switch (monsthere) {
+		case 1: pscore +=     KILLSCORE; break;
+		case 2: pscore += 2 * KILLSCORE; break;
+		case 3: pscore += 4 * KILLSCORE; break;
+		case 4: pscore += 8 * KILLSCORE; break;
+		}
+		sprintf(msgbuf, "You got %s!\n", full_names[mnum]);
+		SPLOT(4, 45, msgbuf);
 		return(GOTONE);
 	};
+	wmonst = mnum;
 	return(TURKEY);
 }
 
@@ -284,9 +253,16 @@ dokill(mnum)
 
 clr()
 {
-	(void) fprintf(stdout, "%s", vs_cl);
-	fflush(stdout);
-	nap(2);
+	clear();
+}
+
+printw(fmt, p1, p2, p3, p4)
+char *fmt;
+int p1, p2, p3, p4;
+{
+	static char buf[100];
+	sprintf(buf, fmt, p1, p2, p3, p4);
+	addstr(buf);
 }
 
 /*
@@ -297,25 +273,25 @@ instruct()
 {
 	clr();
 	POS(0, 0);
-	(void) fprintf(stdout, "Attention: you are in a dungeon, being chased by monsters!\r\n\n");
-	(void) fprintf(stdout, "There are gold coins scattered uniformly in the dungeon, marked by \"+\".\r\n");
-	(void) fprintf(stdout, "One magic potion is available at each spot marked \"X\". Each potion will\r\n");
-	(void) fprintf(stdout, "enable you to kill monsters by touch for a limited duration. It will also\r\n");
-	(void) fprintf(stdout, "scare them away. When you kill a monster it is regenerated, but this takes\r\n");
-	(void) fprintf(stdout, "time. You can also regenerate yourself %d times. Killing all the monsters\r\n", MAXPAC);
-	(void) fprintf(stdout, "results in further treasure appearing magically somewhere in the dungeon,\r\n");
-	(void) fprintf(stdout, "marked by \"$\". There is a magic tunnel connecting the center left and\r\n");
-	(void) fprintf(stdout, "center right parts of the dungeon. The monsters know about it!\r\n\n");
-	(void) fprintf(stdout, "        Type:   h       to move left\r\n");
-	(void) fprintf(stdout, "                l       to move right\r\n");
-	(void) fprintf(stdout, "                k or w  to move up\r\n");
-	(void) fprintf(stdout, "                j or x  to move down\r\n");
-	(void) fprintf(stdout, "                <space> to halt \r\n");
-	(void) fprintf(stdout, "                q       to quit\r\n\n");
-	(void) fprintf(stdout, "        Type:   1       normal game\r\n");
-	(void) fprintf(stdout, "                2       blinking monsters\r\n");
-	(void) fprintf(stdout, "                3       intelligent monsters\r\n");
-	(void) fprintf(stdout, "                4       blinking intelligent monsters\r\n");
+	printw("Attention: you are in a maze, being chased by monsters!\n\n");
+	printw("There is food scattered uniformly in the maze, marked by \".\".\n");
+	printw("One magic potion is available at each spot marked \"O\". Each potion will\n");
+	printw("enable you to eat monsters for a limited duration. It will also\n");
+	printw("scare them away. When you eat a monster it is regenerated, but this takes\n");
+	printw("time. You can also regenerate yourself %d times. Eating all the monsters\n", MAXPAC);
+	printw("results in further treasure appearing magically somewhere in the dungeon,\n");
+	printw("marked by \"$\". There is a magic tunnel connecting the center left and\n");
+	printw("center right parts of the dungeon. The monsters know about it!\n\n");
+	printw("        Type:   h or s  to move left\n");
+	printw("                l or f  to move right\n");
+	printw("                k or e  to move up\n");
+	printw("                j or c  to move down\n");
+	printw("                <space> to halt \n");
+	printw("                q       to quit\n\n");
+	printw("        Type:   1       easy game\n");
+	printw("                2       intelligent monsters\n");
+	printw("                3       very intelligent monsters\n");
+	refresh();
 }
 
 /*
@@ -325,29 +301,27 @@ instruct()
 over()
 {
 	register int i;
-	register int line;
+	register int line, col;
 	int scorefile = 0;
 	struct passwd *getpwuid(), *p;
 
-	fflush(stdout);
-	sleep(5);	/* for slow readers */
-	poll(0);	/* flush and discard input from player */
-	clr();
+	refresh();
+	signal(SIGINT, SIG_IGN);
+	/* clr(); */
 	/* high score to date processing */
 	if (game != 0)
 	{
-		line = 7;
-		POS(line++, 20);
-		(void) fprintf(stdout, " ___________________________ ");
-		POS(line++, 20);
-		(void) fprintf(stdout, "|                           |");
-		POS(line++, 20);
-		(void) fprintf(stdout, "| G A M E   O V E R         |");
-		POS(line++, 20);
-		(void) fprintf(stdout, "|                           |");
-		POS(line++, 20);
-		(void) fprintf(stdout, "| Game type: %1d              |",game);
-		if ((scorefile = open(MAXSCORE, O_RDWR | O_CREAT, 0666)) != -1)
+		col = 45;
+		line = 10;
+		POS(line++, col);
+		(void) printw(" ___________________________ ");
+		POS(line++, col);
+		(void) printw("| G A M E   O V E R         |");
+		POS(line++, col);
+		(void) printw("|                           |");
+		POS(line++, col);
+		(void) printw("| Game type: %6.6s         |",game==1?"easy":game==2?"medium":"smart");
+		if ((scorefile = open(MAXSCORE, 2)) != -1)
 		{
 			read(scorefile, (char *)scoresave, sizeof(scoresave));
 			for (i = MSSAVE - 1; i >= 0; i--) {
@@ -367,35 +341,33 @@ over()
 			lseek(scorefile, 0l, 0);
 			write(scorefile, (char *)scoresave, sizeof(scoresave));
 			close(scorefile);
-			POS(line++, 20);
-			(void) fprintf(stdout, "| High Scores to date:      |");
+			POS(line++, col);
+			(void) printw("| High Scores to date:      |");
 			for (i = 0; i < MSSAVE; i++)
 			{
 				setpwent();
 				p = getpwuid(scoresave[game - 1].entry[i].uid);
-				POS(line++, 20);
-				(void) fprintf(stdout, "| Player : %-8s  %5u  |", p->pw_name,
+				POS(line++, col);
+				(void) printw("| Player : %-8s  %5u  |", p->pw_name,
 					scoresave[game - 1].entry[i].score);
 			};
 		}
 		else
 		{
-			POS(line++, 20);
-			(void) fprintf(stdout, "|                           |");
-			POS(line++, 20);
-			(void) fprintf(stdout, "| Please create a 'paclog'  |");
-			POS(line++, 20);
-			(void) fprintf(stdout, "| file. See 'MAXSCORE' in   |");
-			POS(line++, 20);
-			(void) fprintf(stdout, "| 'pacdefs.h'.              |");
+			/* clr(); */
+			POS(line++, col);
+			(void) printw("|                           |");
+			POS(line++, col);
+			(void) printw("| Please create a 'paclog'  |");
+			POS(line++, col);
+			(void) printw("| file. See 'MAXSCORE' in   |");
+			POS(line++, col);
+			(void) printw("| 'pacdefs.h'.              |");
 		};
-		POS(line++, 20);
-		(void) fprintf(stdout, "|                           |");
-		POS(line++, 20);
-		(void) fprintf(stdout, "| Your score: %-5u         |", pscore);
-		POS(line, 20);
-		(void) fprintf(stdout, "|___________________________|");
+		POS(line, col);
+		(void) printw("|___________________________|");
 	};
+	refresh();
 	leave();
 }
 
@@ -406,27 +378,8 @@ over()
 leave()
 {
 	POS(23, 0);
-	(void) fflush(stdout);
-	sleep(1);
-
-#ifndef NODELAY
-	kill(cpid, SIGKILL);
-#endif
-
-#ifdef BELL3.0
-	ioctl(0, TCSETAW, &savetty);
-#else
-	ioctl(0, TIOCSETP, &savetty);
-#endif
-
-#ifndef NODELAY
-
-#ifndef MSG
-	close(comfile);
-	unlink(fnam);
-#endif
-
-#endif
+	refresh();
+	endwin();
 	exit(0);
 }
 
@@ -440,140 +393,44 @@ init()
 	register int tries = 0;
 	static int lastchar = DELETE;
 	extern short ospeed;		/* baud rate for crt (for tputs()) */
+	int over();
+#ifdef USG
+	struct termio t;
+#endif
 
 	errno = 0;
 	(void) time(&timein);	/* get start time */
 	srand((unsigned)timein);	/* start rand randomly */
-	/*
-	 * verify CRT and get proper cursor control sequence.
-	 */
+	signal(SIGINT, over);
+	signal(SIGQUIT, over);
 
-#ifdef NODELAY
+	/* Curses init - could probably eliminate much of stuff below */
+	initscr();
+	noecho();
+	crmode();
+	nonl();
+	leaveok(stdscr, TRUE);
+	vs_rows = LINES;
+	vs_cols = COLS;
 
-#ifndef BELL3.0
-	close(0);
-	if (open("/dev/tty", O_RDONLY | O_NDELAY) != 0)
-	{
-		perror("Unable to open /dev/tty");
-		exit(1);
-	};
-#endif
-
-#endif
-	vsinit();
-	/*
-	 * setup raw mode, no echo
-	 */
-#ifdef BELL3.0
-	ioctl(0, TCGETA, &savetty);
-	newtty = savetty;
-	if ((savetty.c_cflag & CBAUD) == B9600)
-	{
-		delay = 1000 * (nrand(10) + 5);
-	}
-	else
-	{
-		delay = 1000;
-	};
-	ospeed = savetty.c_cflag & CBAUD;	/* for tputs() */
-#ifdef NODELAY
-	newtty.c_cc[VTIME] = 7;
-	newtty.c_cc[VMIN] = 0;
-#else
-	newtty.c_cc[VMIN] = 1;
-#endif
-	newtty.c_iflag = 0;
-	newtty.c_oflag &= ~OPOST;
-	newtty.c_cflag &= ~(PARENB | CSIZE);
-	newtty.c_cflag |= CS8;
-	newtty.c_lflag &= ~(ECHO | ECHOE | ISIG | ICANON | XCASE);
-	ioctl(0, TCSETAW, &newtty);
-#else
-	ioctl(0, TIOCGETP, &savetty);
-	newtty = savetty;
-	if (savetty.sg_ospeed >= B9600)
-		delay = 1000 * (nrand(10) + 5);
-	else
-		delay = 1000;
-	ospeed = savetty.sg_ospeed;		/* for tputs() */
-	newtty.sg_flags |= CBREAK;
-	newtty.sg_flags &= ~ECHO;
-	ioctl(0, TIOCSETP, &newtty);
+#ifdef USG
+	ioctl(0, TCGETA, &t);
+	t.c_cc[VTIME] = 0;
+	t.c_cc[VMIN] = 0;
+	ioctl(0, TCSETA, &t);
 #endif
 
-	/*
-	 * set up communications
-	 */
+	if (delay == 0)
+		delay = 500;	/* number of ticks per turn */
 
-#ifndef NODELAY
-
-#ifndef MSG
-	fnam = mktemp(TMPF);
-	if ((comfile = creat(fnam, 0666)) == -1)
-	{
-		(void) sprintf(message, "Cannot create %s", fnam);
-		perror(message);
-		leave();
-	};
-	/*
-	 * initialize semaphore
-	 */
-	lseek(comfile, 0l, 0);
-	combuf[1] = EMPTY;
-	write(comfile, combuf, 2);
-	close(comfile);
-#endif
-#endif
-
-#ifndef NODELAY
-	/*
-	 * fork off a child to read the input
-	 */
-	ppid = getpid();
-	if ((cpid = fork()) == 0)
-	{
-#ifndef MSG
-		comfile = open(fnam, O_RDWR);
-#endif
-		for (;;)
-		{
-			read(0, inbuf, 1);
-			if (lastchar != inbuf[0])
-			{
-#ifdef MSG
-				if (inbuf[0] == DELETE || inbuf[0] == ABORT)
-					leave();
-				send(inbuf, 1, ppid, 64);
-#else
-				lseek(comfile, 0l, 0);
-				read(comfile, combuf, 2);
-				if (combuf[1] == EMPTY)
-				{
-					lseek(comfile, 0l, 0);
-					combuf[0] = inbuf[0];
-					combuf[1] = FULL;
-					write(comfile, combuf, 2);
-				};
-#endif
-			};
-			lastchar = DELETE;
-		};
-	};
-
-#ifndef MSG
-	comfile = open(fnam, O_RDWR);
-#else
-	msgenab();
-#endif
-
-#endif
 	/*
 	 * New game starts here
 	 */
-	game = 0;
-	instruct();
+	if (game == 0)
+		instruct();
 	while ((game == 0) && (tries++ < 300))
 	{
+		napms(100);
 		poll(1);
 	};
 	if (tries >= 300)
@@ -596,24 +453,28 @@ poll(sltime)
 	register int charcnt;
 	int junk;
 
-#ifndef NODELAY
-#ifdef MSG
-	struct mstruct msghead;
-#endif
-#endif
-
 	stop = 0;
 readin:
 
-#ifdef NODELAY
-	fflush(stdout);
-	charcnt = 0;
-	nap(12);
-#ifndef BELL3.0
-	ioctl(0, FIONREAD, &junk);
-	if (junk)
-#endif
+	refresh();
+	/* Check for input we've seen but not processed */
+	if (combuf[1] == FULL)
+		charcnt = 1;
+	else
+		charcnt = 0;
+#ifdef FIONREAD
+	/* Check for typeahead on 4BSD systems. */
+	if (charcnt <= 0) {
+		ioctl(0, FIONREAD, &junk);
+		if (junk)
+			charcnt = read(0, combuf, 1);
+	}
+#else
+	/* Have to try a read if nothing else worked. */
+	if (charcnt <= 0)
 		charcnt = read(0, combuf, 1);
+#endif
+
 	switch (charcnt)
 	{
 
@@ -630,28 +491,9 @@ readin:
 		combuf[1] = FULL;
 		break;
 	};
-#else
 
-#ifdef MSG
-	combuf[1] = (recv(combuf, 1, &msghead, 0) == -1) ? EMPTY : FULL;
-#else
-	lseek(comfile, 0l, 0);	/* rewind */
-	read(comfile, combuf, 2);	/* read 2 chars */
-#endif
-
-#endif
 	if (combuf[1] == EMPTY) 
 	{
-#ifndef BELL3.0
-
-#ifndef NODELAY
-		if (sltime > 0)
-		{
-			sleep(sltime);
-		};
-#endif
-
-#endif
 		if (stop)
 		{
 			goto readin;
@@ -659,14 +501,6 @@ readin:
 		return;
 	};
 	combuf[1] = EMPTY;
-
-#ifndef NODELAY
-
-#ifndef MSG
-	lseek(comfile, 0l, 0);	/* another rewind */
-	write(comfile, combuf, 2);
-#endif
-#endif
 
 	switch(combuf[0] & 0177)
 	{
@@ -692,6 +526,10 @@ readin:
 		pacptr->dirn = DNULL;
 		break;
 
+	case REDRAW:
+		clearok(curscr, TRUE);
+		break;
+
 	case ABORT:
 	case DELETE:
 	case QUIT:
@@ -714,53 +552,236 @@ readin:
 		game = 3;
 		break;
 
-	case GAME4:
-		game = 4;
-		break;
-
 	default:
 		goto readin;
 	}
 }
 
-vsinit()
+getrand(range)
+	int range;
 {
-	char buf[1024];
-	char tspace[256], *aoftspace;
-	char *tgetstr();
-	extern char *UP, *BC;   /* defined in tgoto.c (from ex's termlib */
-	extern char PC;		/* defined in tputs.c (from termlib) */
+	register unsigned int q;
 
-	tgetent(buf, getenv("TERM"));
-	aoftspace = tspace;
-	vs_cl = tgetstr("cl", &aoftspace);
-	vs_cm = tgetstr("cm", &aoftspace);
-	BC = tgetstr("bc", &aoftspace);
-	UP = tgetstr("up", &aoftspace);
-	PC = *tgetstr("pc", &aoftspace);
-	vs_vb = tgetstr("vb", &aoftspace);
-	vs_rows = tgetnum("li");
-	vs_cols = tgetnum("co");
-	if ((vs_vb == 0) || (*vs_vb == '\0'))
-	{
-		vs_vb = aoftspace;
-		*vs_vb++ = '';
-		*vs_vb++ = '\0';
-		aoftspace += 2;
-	};
-	if ((vs_cl == 0) || (*vs_cl == '\0') ||
-		(vs_cm == 0) || (*vs_cm == '\0'))
-	{
-		(void) fprintf(stderr, "\nPacman is designed for CRT's with addressable cursors.\n");
-		(void) fprintf(stderr, "Verify that the TERM environment variable is a proper\n");
-		(void) fprintf(stderr, "type and is export-ed, and try it again...\n\n");
-		exit(2);
-	};
+	q = rand();
+	return(q % range);
 }
 
-/* dfp - real function for tputs function to use */
-putch( ch )
-	register int ch;
+/*
+ * This function is convenient for debugging pacman.  It isn't used elsewhere.
+ * It's like printf and prints in a window on the right hand side of the screen.
+ */
+msgf(fmt, arg1, arg2, arg3, arg4)
+char *fmt;
+int arg1, arg2, arg3, arg4;
 {
-	putchar( ch );
+	char msgbuf[100];
+	static char msgline = 13;
+
+	sprintf(msgbuf, fmt, arg1, arg2, arg3, arg4);
+	SPLOT(msgline, 45, msgbuf);
+	if (msgline++ > 20)
+		msgline = 13;
 }
+
+/*
+ * napms.  Sleep for ms milliseconds.  We don't expect a particularly good
+ * resolution - 60ths of a second is normal, 10ths might even be good enough,
+ * but the rest of the program thinks in ms because the unit of resolution
+ * varies from system to system.  (In some countries, it's 50ths, for example.)
+ *
+ * If you're thinking of replacing this with a call to sleep, or by outputting
+ * some pad characters, forget it.  You won't get a decent game.  You absolutely
+ * HAVE to have a fraction-of-a-second sleep.  Sleeping for a full second will
+ * make the game seem really slow.  Outputting pad characters will cause the
+ * keyboard to be ahead of the display by whatever buffering the tty driver
+ * does, typically about one second.  This causes you to have to anticipate
+ * your moves and also makes response dependent on system load - in general
+ * the game will be crummy.
+ *
+ * Here are some reasonable ways to get a good nap.
+ *
+ * (1) Use the select (dselect?) system call in Berkeley 4.2BSD.
+ *
+ * (2) Use the 1/10th second resolution wait in the UNIX 3.0 tty driver.
+ *     (This is untested - rumor has it that this feature does not work
+ *     as advertised, and there might also be problems with the user hitting
+ *     a key too soon.)
+ *
+ * (3) Install the ft (fast timer) device in your kernel.
+ *     This is a psuedo-device to which an ioctl will wait n ticks
+ *     and then send you an alarm.
+ *
+ * (4) Install the nap system call in your kernel.
+ *     This system call does a timeout for the requested number of ticks.
+ */
+#ifdef SELECT
+napms(ms)
+int ms;
+{
+	select(0, 0, 0, ms);
+}
+#endif
+
+#if FTIOCSET || NAPSYSCALL
+/*
+ * Pause for ms milliseconds.  Convert to ticks and wait that long.
+ * the constant 6 is HZ/10, change it to 5 for 50 HZ systems.
+ * Call nap, which is either defined below or a system call.
+ */
+napms(ms)
+int ms;
+{
+	int ticks = ms * 6 / 100;
+	if (ticks <= 0)
+		ticks = 1;
+	nap(ticks);	/* call either the code below or nap system call */
+}
+#endif
+
+#ifdef FTIOCSET
+/*
+ * This uses the ft device.
+ * The following code is adapted from the sleep code in libc.
+ * It uses the "fast timer" device posted to USENET in Feb 1982.
+ * nap is like sleep but the units are ticks (e.g. 1/60ths of
+ * seconds in the USA).
+ */
+#include <setjmp.h>
+static jmp_buf jmp;
+static int ftfd;
+
+nap(n)
+unsigned n;
+{
+	int napx();
+	unsigned altime;
+	int (*alsig)() = SIG_DFL;
+	char *ftname;
+	struct requestbuf {
+		short time;
+		short signo;
+	} rb;
+
+	if (ftfd <= 0) {
+		ftname = "/dev/ft0";
+		while (ftfd <= 0) {
+			ftfd = open(ftname, 0);
+			if (ftfd <= 0)
+				ftname[7] ++;
+		}
+	}
+	if (n==0)
+		return;
+	altime = alarm(1000);	/* time to maneuver */
+	if (setjmp(jmp)) {
+		signal(SIGALRM, alsig);
+		alarm(altime);
+		return;
+	}
+	if (altime) {
+		if (altime > n)
+			altime -= n;
+		else {
+			n = altime;
+			altime = 1;
+		}
+	}
+	alsig = signal(SIGALRM, napx);
+	rb.time = n;
+	rb.signo = SIGALRM;
+	ioctl(ftfd, FTIOCSET, &rb);
+	for(;;)
+		pause();
+	/*NOTREACHED*/
+}
+
+static
+napx()
+{
+	longjmp(jmp, 1);
+}
+#endif
+
+#ifdef USG
+#define IDLETTY "/dev/idletty"
+/*
+ * Do it with the timer in the tty driver.  Resolution is only 1/10th
+ * of a second.  Problem is, if the user types something while we're
+ * sleeping, we wake up immediately, and have no way to tell how long
+ * we should sleep again.  So we're sneaky and use a tty which we are
+ * pretty sure nobody is using.
+ *
+ * This requires some care.  If you choose a tty that is a dialup or
+ * which otherwise can show carrier, it will hang and you won't get
+ * any response from the keyboard.  You can use /dev/tty if you have
+ * no such tty, but response will feel funny as described above.
+ */
+napms(ms)
+int ms;
+{
+	struct termio t, ot;
+	static int ttyfd;
+	int n, tenths;
+	char c;
+
+	if (ttyfd == 0)
+		ttyfd = open(IDLETTY, 2);
+	if (ttyfd < 0) {
+		fprintf(stderr, "Need read/write permission on %s\r\n",
+				IDLETTY);
+		leave();
+	}
+	tenths = (ms+50) / 100;
+	ioctl(ttyfd, TCGETA, &t);
+	ot = t;
+	t.c_cflag &= ~ICANON;
+	t.c_cc[VMIN] = 0;
+	t.c_cc[VTIME] = tenths;
+	ioctl(ttyfd, TCSETA, &t);
+	n = read(ttyfd, &c, 1);
+	if (n > 0) {
+		combuf[0] = c;
+		combuf[1] = FULL;
+	}
+	ioctl(ttyfd, TCSETA, &ot);
+}
+#endif
+
+#ifndef A_BLINK
+/* Simulations for the old curses */
+flushinp()
+{
+#ifdef USG
+	ioctl(0, TCFLSH, 0);
+#else
+	ioctl(0, TIOCFLUSH, 0);
+#endif
+}
+
+beep()
+{
+	putchar('\7');
+	fflush(stdout);
+}
+
+baudrate()
+{
+	int baud;
+
+#ifdef USG
+	baud = _tty.c_cflag & CBAUD;
+#else
+	baud = _tty.sg_ospeed;
+#endif
+	switch (baud) {
+	case B110: return 110;
+	case B300: return 300;
+	case B1200: return 1200;
+	case B2400: return 2400;
+	case B4800: return 4800;
+	case B9600: return 9600;
+	case EXTA: return 19200;
+	}
+	return 9600;	/* Guess */
+}
+#endif

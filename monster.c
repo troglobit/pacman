@@ -2,23 +2,15 @@
 #include	"pacdefs.h"
 
 extern char
-	*vs_cm;
-
-extern char
 	brd[BRDY][BRDX],
 	display[BRDY][BRDX];
-
-extern int
-	putch();
-
-extern char
-	*tgoto();
 
 extern int
 	delay,
 	game,
 	killflg,
 	potion,
+	monst_often,
 	rounds;
 
 extern unsigned
@@ -32,16 +24,23 @@ int	rscore[MAXMONSTER];
 struct pac
 	monst[MAXMONSTER];
 
+char monst_names[] =  "BIPC";
+char runner_names[] = "bipc";
+char *full_names[] = {
+	"Blinky", "Inky", "Pinky", "Clyde", 0
+};
+#ifdef A_BLINK
+#define	flash	A_BOLD
+#define	rflash	A_REVERSE
+#else
+#define flash	0
+#define rflash	_STANDOUT
+#endif
+
 startmonst()
 {
 	register struct pac *mptr;
 	register int monstnum;
-
-	if (potion == TRUE)
-	{
-		/* don't start if potion active */
-		return;
-	};
 
 	for (mptr = &monst[0], monstnum = 0; monstnum < MAXMONSTER; mptr++, monstnum++)
 	{
@@ -55,16 +54,18 @@ startmonst()
 			/* initialize moving monster */
 			mptr->ypos = MBEGINY;
 			mptr->xpos = MBEGINX;
-			mptr->speed = SLOW;
-			mptr->danger = TRUE;
+			mptr->ydpos = MBEGINY;
+			mptr->xdpos = MBEGINX;
 			mptr->stat = RUN;
-			PLOT(MBEGINY, MBEGINX, MONSTER);
+			PLOT(MBEGINY, MBEGINX, mptr->danger ?
+				monst_names[monstnum] | flash :
+				runner_names[monstnum] | rflash);
 
 			/* DRIGHT or DLEFT? */
-			mptr->dirn = nrand(2) + DLEFT;
+			mptr->dirn = getrand(2) + DLEFT;
 			break;
-		};
-	};
+		}
+	}
 }
 
 monster(mnum)
@@ -73,7 +74,6 @@ monster(mnum)
 	register int newx,newy;
 	register int tmpx, tmpy;
 	struct pac *mptr;
-	int gmod2;
 
 	mptr = &monst[mnum];
 
@@ -84,16 +84,6 @@ monster(mnum)
 	/* if we can, let's move a monster */
 	if (mptr->stat == RUN)
 	{
-		gmod2 = game % 2;
-		/* if a monster was displayed ... */
-		if ((gmod2 == 1) ||
-			((gmod2 == 0) &&
-			(( (rounds - 1) % rscore[mnum]) == 0)))
-		{
-			/* replace display character */
-			PLOT(tmpy, tmpx, display[tmpy][tmpx]);
-		};
-
 		/* get a new direction */
 		mptr->dirn = which(mptr, tmpx, tmpy);
 		switch (mptr->dirn)
@@ -141,21 +131,20 @@ monster(mnum)
 			{
 				killflg = dokill(mnum);
 			};
-			rscore[mnum] = pscore / 100 + 1;
-			if ((gmod2 == 1) || (killflg == TURKEY) ||
-				( (gmod2 == 0) &&
-				((rounds % rscore[mnum]) == 0)))
-			{
-
+			if (rounds % monst_often == 0 || killflg == TURKEY) {
+				PLOT(mptr->ydpos,mptr->xdpos,
+					display[mptr->ydpos][mptr->xdpos]);
 				if (mptr->danger == TRUE)
 				{
-					PLOT(newy, newx, MONSTER);
+					PLOT(newy, newx, monst_names[mnum] | flash);
 				}
 				else if (killflg != GOTONE)
 				{
-					PLOT(newy, newx, RUNNER);
+					PLOT(newy, newx, runner_names[mnum] | rflash);
 				};
-			};
+				mptr->ydpos = newy;
+				mptr->xdpos = newx;
+			}
 			break;
 
 		default:
@@ -216,10 +205,10 @@ which(mptr, x, y)	/* which directions are available ? */
 	 * If the player requested intelligent monsters and
 	 * the player is scoring high ...
 	 */
-	if (((game == 3) || (game == 4)) && (nrand(1000) < pscore))
+	if (game >= 2 && getrand(game == 2 ? 10000 : 1000) < pscore)
 	{
 		/* make monsters intelligent */
-		if (pacptr->danger == TRUE)
+		if (mptr->danger == FALSE)
 		{
 			/*
 			 * Holy Cow!! The pacman is dangerous,
@@ -302,7 +291,7 @@ which(mptr, x, y)	/* which directions are available ? */
 		goodmoves = 0;
 		for (submovecnt = 0; submovecnt < movecnt; submovecnt++)
 		{
-			if (pacptr->danger == FALSE)
+			if (mptr->danger == TRUE)
 			{
 				if ((moves[submovecnt] == nydirn) ||
 					(moves[submovecnt] == nxdirn))
@@ -321,8 +310,8 @@ which(mptr, x, y)	/* which directions are available ? */
 		};
 		if (goodmoves > 0)
 		{
-			return(submoves[nrand(goodmoves)]);
+			return(submoves[getrand(goodmoves)]);
 		};
 	};
-	return(moves[nrand(movecnt)]);
+	return(moves[getrand(movecnt)]);
 }

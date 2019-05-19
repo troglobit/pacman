@@ -1,5 +1,6 @@
 /*
 /* PACMAN  - written by Dave Nixon, AGS Computers Inc., July, 1981.
+/* Converted for curses Feb 1982 by Mark Horton.
 /*
 /* Terminal handling for video games taken from aliens
 /*      the original version  of aliens is from 
@@ -17,20 +18,11 @@
 /* be implemented, and the child process could be dispensed with entirely.
 */
 #include <stdio.h>
-#include	"pacdefs.h"
+#include "pacdefs.h"
  
 /*
  * global variables
  */
-
-extern char
-	*vs_cm;
-
-extern int
-	putch();
-
-extern char
-	*tgoto();
 
 extern char
 	message[];
@@ -45,13 +37,29 @@ extern unsigned
 extern struct pac
 	monst[];
 
+extern char monst_names[];
+#ifdef A_BLINK
+# define pflash A_BLINK
+#else
+# define pflash _STANDOUT
+#endif
+
 int	pacsymb = PACMAN,
 	rounds,		/* time keeping mechanism */
 	killflg,
 	delay,
 	potion,
 	goldcnt,		/* no. of gold pieces remaining */
-	potioncnt;
+	game,
+	monst_often,
+	monsthere,
+	boardcount = 1,
+	wmonst,
+	potintvl = POTINTVL,
+	potioncnt,
+	treascnt = 0;
+extern
+	char *full_names[];
 
 struct pac
 	pac;
@@ -69,30 +77,68 @@ struct pac
 struct pac
 	*pacptr = &pac;
 
-main()
+#define DEFCHPERTURN 60
+
+main(argc, argv)
+char **argv;
 {
 	register int tmp;		/* temp variables */
 	register int pac_cnt;
 	register int monstcnt;	/* monster number */
+	int tries;
+	long denom;
 	struct pac *mptr;
 	char gcnt[10];
+	char msgbuf[50];
+	int chperturn = DEFCHPERTURN;
 
+	game = 0;
+	if (argc > 1) {
+		game = argv[1][0] - '0';
+		if (game < 1 || game > 3)
+			game = 0;
+		if (argc > 2)
+			chperturn = atoi(argv[2]);
+	}
 	init();		/* global init */
 	for (pac_cnt = MAXPAC; pac_cnt > 0; pac_cnt--)
 	{
 redraw:
-		clr();
+		erase();
+		potioncnt = 0;
+		treascnt = 0;
+		potion = FALSE;
 		SPLOT(0, 45, "SCORE: ");
+		(void) sprintf(msgbuf, "GAME: %s",	game==1 ? "EASY" :
+							game==2 ? "MEDIUM" :
+								  "HARD");
+		SPLOT(0, 65, msgbuf);
 		SPLOT(21, 45, "gold left = ");
 		(void) sprintf(gcnt, "%6d", goldcnt);
 		SPLOT(21, 57, gcnt);
+
+		/*
+		 * We update the monsters every monst_often turns, to keep
+		 * the CRT caught up with the computer.  The fudge factor
+		 * was calculated from the assumption that each full refresh
+		 * outputs chperturn characters.  The default is pessimistic
+		 * based on ANSI and HP terminals w/verbose cursor addressing.
+		 */
+		denom = ((long) delay) * baudrate();
+		monst_often = (chperturn * 10000L + denom - 1) / denom;
+		if (monst_often < 1)
+			monst_often = 1;
+
 		if (potion == TRUE)
 		{
 			SPLOT(3, 45, "COUNTDOWN: ");
+			(void) sprintf(message, "%2d", potioncnt);
+			SPLOT(3, 60, message);
 		};
 		pacsymb = PACMAN;
 		killflg = FALSE;
-		(void) sprintf(message, "delay = %6d", delay);
+		(void) sprintf(message,
+			"delay = %3d, refresh = %3d", delay, monst_often);
 		SPLOT(22, 45, message);
 		/*
 		 * PLOT maze
@@ -103,11 +149,11 @@ redraw:
 		};
 		/* initialize a pacman */
 		pac = pacstart;
-		PLOT(pacptr->ypos, pacptr->xpos, pacsymb);
+		PLOT(pacptr->ypos, pacptr->xpos, pacsymb | pflash);
 		/* display remaining pacmen */
 		for (tmp = 0; tmp < pac_cnt - 1; tmp++)
 		{
-			PLOT(23, (MAXPAC * tmp), PACMAN);
+			PLOT(LINES >=24 ? 23 : 22, (MAXPAC * tmp), PACMAN);
 		};
 		/*
 		 * Init. monsters
@@ -118,11 +164,21 @@ redraw:
 			mptr->ypos = MSTARTY;
 			mptr->speed = SLOW;
 			mptr->dirn = DNULL;
-			mptr->danger = FALSE;
+			mptr->danger = TRUE;
 			mptr->stat = START;
-			PLOT(mptr->ypos, mptr->xpos, MONSTER);
+			PLOT(mptr->ypos, mptr->xpos, monst_names[monstcnt]);
+			mptr->xdpos = mptr->xpos;
+			mptr->ydpos = mptr->ypos;
 		};
 		rounds = 0;	/* timing mechanism */
+		update();
+		refresh();
+		tries = 0;
+		while ((pacptr->dirn == NULL) && (tries++ < 300))
+		{
+			napms(100);
+			poll(1);
+		}
 
 		/* main game loop */
 		do
@@ -154,34 +210,49 @@ redraw:
 				break;
 			if (potion == TRUE)
 			{
-				(void) sprintf(message, "%2d%c", potioncnt,
-					((potioncnt == 10) ? BEEP : ' '));
+				(void) sprintf(message, "%2d", potioncnt);
 				SPLOT(3, 60, message);
+				if (potioncnt == 10 || potioncnt < 5)
+					beep();
 				if (--potioncnt <= 0)
 				{
-					SPLOT(3, 45, "                        ");
+					SPLOT(3,45,"                        ");
+					SPLOT(4,45,"                        ");
+					SPLOT(5,45,"                        ");
 					potion = FALSE;
 					pacptr->speed = SLOW;
 					pacptr->danger = FALSE;
 					for (monstcnt = 0; monstcnt < MAXMONSTER; monstcnt++)
 					{
 						monst[monstcnt].danger = TRUE;
-					};
-				};
-			};
-			update();	/* score display etc */
+					}
+				}
+			}
+			if (treascnt && --treascnt == 0) {
+				display[TRYPOS][TRXPOS] = VACANT;
+				PLOT(TRYPOS, TRXPOS, VACANT);
+			}
+			if (rounds % monst_often == 0)
+				update();	/* score display etc */
+			refresh();
 			if (goldcnt <= 0)
 			{
+				potintvl -= 5;
+				if (potintvl <= 0)
+					potintvl = 5;
 				reinit();
 				goto redraw;
 			};
 		} while (killflg != TURKEY);
-		SPLOT(5, 45, "YOU ARE BEING EATEN");
-		SPLOT(6, 45, "THIS TAKES ABOUT 2 SECONDS");
+		sprintf(msgbuf, "Oops!  %s got you!\n", full_names[wmonst]);
+		SPLOT(5, 45, msgbuf);
+		flushinp();
+		refresh();
 		sleep(2);
-	};
+	}
 	SPLOT(8, 45, "THE MONSTERS ALWAYS TRIUMPH");
 	SPLOT(9, 45, "IN THE END!");
+	update();
 	over();
 }
 
@@ -193,8 +264,10 @@ pacman()
 	int deltat;
 	struct pac *mptr;
 
+	refresh();
+
 	/* pause; wait for the player to hit a key */
-	for (deltat = delay; deltat > 0; deltat--);
+	napms(delay);
 
 	/* get instructions from player, but don't wait */
 	poll(0);
@@ -211,7 +284,7 @@ pacman()
 	switch (pacptr->dirn)
 	{
 	case DUP:
-		pacsymb = PUP;
+		pacsymb = (rounds%2) ? CUP : PUP;
 		switch (sqtype = display[tmpy + UPINT][tmpx])
 		{
 		case GOLD:
@@ -227,11 +300,12 @@ pacman()
 
 		default:
 			pacptr->dirn = DNULL;
+			pacsymb = PACMAN;
 			break;
 		};
 		break;
 	case DDOWN:
-		pacsymb = PDOWN;
+		pacsymb = (rounds%2) ? CDOWN : PDOWN;
 		switch (sqtype = display[tmpy + DOWNINT][tmpx])
 		{
 		case GOLD:
@@ -247,6 +321,7 @@ pacman()
 
 		default:
 			pacptr->dirn = DNULL;
+			pacsymb = PACMAN;
 			break;
 		};
 		break;
@@ -259,7 +334,7 @@ pacman()
 			sqtype = VACANT;
 			break;
 		};
-		pacsymb = PLEFT;
+		pacsymb = (rounds%2) ? CLEFT : PLEFT;
 		switch (sqtype = display[tmpy][tmpx + LEFTINT])
 		{
 		case GOLD:
@@ -275,6 +350,7 @@ pacman()
 		
 		default:
 			pacptr->dirn = DNULL;
+			pacsymb = PACMAN;
 			break;
 		};
 		break;
@@ -287,7 +363,7 @@ pacman()
 			sqtype = VACANT;
 			break;
 		};
-		pacsymb = PRIGHT;
+		pacsymb = (rounds%2) ? CRIGHT : PRIGHT;
 		switch (sqtype = display[tmpy][tmpx + RIGHTINT])
 		{
 		case GOLD:
@@ -303,28 +379,42 @@ pacman()
 
 		default:
 			pacptr->dirn = DNULL;
+			pacsymb = PACMAN;
 			break;
 		};
 		break;
-	};
+	case DNULL:
+		pacsymb = PACMAN;
+		break;
+	}
 
 	/* did the pacman get any points or eat a potion? */
 	switch (sqtype)
 	{
 	case CHOICE:
 	case GOLD:
-		pscore++;
+		pscore += GOLDVAL;
 		goldcnt--;
 		break;
 
 	case TREASURE:
-		pscore += TREASVAL;
+		switch (boardcount) {
+			case 0:
+			case 1:          pscore +=  100; break;
+			case 2:          pscore +=  200; break;
+			case 3: case  4: pscore +=  500; break;
+			case 5: case  6: pscore +=  700; break;
+			case 7: case  8: pscore += 1000; break;
+			default:
+			case 9: case 10: pscore += 2000; break;
+		}
 		break;
 
 	case POTION:
 		SPLOT(3, 45, "COUNTDOWN: ");
 		potion = TRUE;
-		potioncnt = POTINTVL;
+		potioncnt = potintvl;
+		monsthere = 0;
 		pacptr->speed = FAST;
 		pacptr->danger = TRUE;
 
@@ -332,32 +422,22 @@ pacman()
 		mptr = &monst[0];
 		for (mcnt = 0; mcnt < MAXMONSTER; mcnt++)
 		{
-			if (mptr->stat == RUN)
-			{
-				mptr->speed = SLOW;
-				mptr->danger = FALSE;
-			};
+			mptr->speed = SLOW;
+			mptr->danger = FALSE;
 			mptr++;
-		};
+		}
 		break;
-	};
+	}
 
 	/* did the pacman run into a monster? */
+	killflg = FALSE;
 	for (mptr = &monst[0], mcnt = 0; mcnt < MAXMONSTER; mptr++, mcnt++)
 	{
-		if ((mptr->xpos == pacptr->xpos) &&
-			(mptr->ypos == pacptr->ypos))
-		{
-
+		if ((mptr->xpos==pacptr->xpos) && (mptr->ypos==pacptr->ypos))
 			killflg = dokill(mcnt);
-		}
-		else
-		{
-			killflg = FALSE;
-		};
 	};
 	if (killflg != TURKEY)
 	{
-		PLOT(pacptr->ypos, pacptr->xpos, pacsymb);
+		PLOT(pacptr->ypos, pacptr->xpos, pacsymb | pflash);
 	};
 }

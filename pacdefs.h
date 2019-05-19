@@ -1,34 +1,36 @@
+#include <curses.h>
 /* dfp #define POS(row,col)    fputs(tgoto(vs_cm,(col),(row)),stdout)*/
-#define POS(row,col)	tputs(tgoto(vs_cm,(col),(row)),1,putch)
+/* #define POS(row,col)	tputs(tgoto(vs_cm,(col),(row)),1,putch) */
+#define POS(row,col)	move(row, col)
 /* dfp */
-#define	PLOT(A,B,C)	POS(A,B);putchar(C)
-#define	SPLOT(A,B,S)	POS(A,B);(void)fprintf(stdout, "%s", S)
+#define	PLOT(A,B,C)	POS(A,B);addch(C)
+#define	SPLOT(A,B,S)	POS(A,B);addstr(S)
 #define TMPF	"/usr/tmp/pacmanXXXXXX"
 #define GAME1	'1'
 #define GAME2	'2'
 #define GAME3	'3'
-#define GAME4	'4'
 #define MAXSCORE	"/usr/games/lib/paclog"
 #define MSSAVE	5	/* maximum scores saved per game type */
-#define MGTYPE	4	/* Maximum game types */
+#define MGTYPE	3	/* Maximum game types */
 #define	MAXPAC	3	/* maximum number of pacmen to start */
 #define	MAXMONSTER	4	/* max number of monsters */
 #define EMPTY	'E'
 #define FULL	'F'
 #define LEFT	'h'
+#define NLEFT	's'
 #define RIGHT	'l'
+#define NRIGHT	'f'
 #define	NORTH	'k'	/* means UP, but UP defined in vsinit() */
-#define NNORTH	'w'
+#define NNORTH	'e'
 #define	DOWN	'j'
-#define NDOWN	'x'
+#define NDOWN	'c'
 #define HALT	' '
+#define REDRAW	'\14'
 #define DELETE	'\177'
 #define ABORT	'\34'
 #define QUIT	'q'
 #define CNTLS	'\23'
 #define BUF_SIZE	32
-#define	TRUE	1
-#define	FALSE	0
 #define	UPINT	(-1)
 #define	DOWNINT	1
 #define	LEFTINT	(-2)
@@ -38,10 +40,10 @@
 #define	RUNNER	'S'
 #define	TREASURE	'$'
 #define	CHOICE		'*'
-#define	GOLD		'+'
-#define	POTION		'X'
+#define	GOLD		'.'
+#define	POTION		'O'
 #define	VACANT		' '	/* space */
-#define	WALL		'O'
+#define	WALL		'#'
 #define	GATE		'-'
 #define	START	0
 #define	RUN	1
@@ -65,25 +67,32 @@
 #define	BRDX	40
 #define	BRDY	23
 #define XWRAP	38
-#define	TREASVAL	20
-#define	KILLSCORE	10
-#define	BEEP		''	/* ctrl-g */
+
+/* Scores */
+#define	TREASVAL	50
+#define	KILLSCORE	200
+#define GOLDVAL		10
+
 #define	MSTARTINTVL	10
 #define	POTINTVL	25
 #define GOLDCNT	185
-#define PUP	'^'
-#define PDOWN	'v'
-#define PLEFT	'<'
-#define PRIGHT	'>'
+#define CUP	'|'
+#define CDOWN	'|'
+#define CLEFT	'-'
+#define CRIGHT	'-'
+#define PUP	'v'
+#define PDOWN	'^'
+#define PLEFT	'>'
+#define PRIGHT	'<'
 
 struct	pac
 {
-	int	xpos;	/* horizontal position */
-	int	ypos;	/* vertical   position */
+	int	xpos;	/* real horizontal position */
+	int	ypos;	/* real vertical   position */
 	int	dirn;	/* direction of travel */
 	int	speed;	/* FAST/SLOW	       */
 	int	danger;	/* TRUE if can eat     */
 	int	stat;	/* status		*/
+	int	xdpos;	/* horizontal position currently displayed at */
+	int	ydpos;	/* vertical   position currently displayed at */
 };
-
-#define nap(x)  
