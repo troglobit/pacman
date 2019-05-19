@@ -1,0 +1,5 @@
+*.o
+GPATH
+GTAGS
+GRTAGS
+pacman
