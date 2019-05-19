@@ -12,6 +12,8 @@
 #include <errno.h>
 #include <signal.h>
 #include <pwd.h>
+#include <termios.h>
+#include <unistd.h>
 #include <curses.h>
 
 extern char
@@ -523,7 +525,8 @@ readin:
 
 	case REDRAW:
 		clearok(curscr, TRUE);
-		draino(0);
+//		draino(0);
+		tcdrain(STDOUT_FILENO);
 		break;
 
 	case ABORT:

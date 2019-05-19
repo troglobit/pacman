@@ -20,6 +20,8 @@
  * from UCB's ex) added by Rob Coben, BTL, June, 1980.
  */
 #include <stdio.h>
+#include <termios.h>
+#include <unistd.h>
 #include "pacdefs.h"
  
 /*
@@ -307,7 +309,8 @@ pacman()
 	 * This is to make it work better on verbose terminals
 	 * at 1200 baud.
 	 */
-	draino(100);
+//	draino(100);
+	tcdrain(STDOUT_FILENO);
 
 	/* get command from player, but don't wait */
 	poll(0);
