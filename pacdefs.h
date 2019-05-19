@@ -8,11 +8,10 @@
 /* dfp */
 #define	PLOT(A,B,C)	POS(A,B);addch(C)
 #define	SPLOT(A,B,S)	POS(A,B);addstr(S)
-#define TMPF	"/usr/tmp/pacmanXXXXXX"
 #define GAME1	'1'
 #define GAME2	'2'
 #define GAME3	'3'
-#define MAXSCORE	"/usr/games/lib/paclog"
+#define MAXSCORE	"/var/games/pacman.log"
 #define MSSAVE	5	/* maximum scores saved per game type */
 #define MGTYPE	3	/* Maximum game types */
 #define	MAXPAC	3	/* maximum number of pacmen to start */
