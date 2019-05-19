@@ -567,7 +567,7 @@ readin:
 	}
 }
 
-int getrand(range)
+unsigned int getrand(range)
 	int range;
 {
 	register unsigned int q;

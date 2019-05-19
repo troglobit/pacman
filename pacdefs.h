@@ -129,6 +129,6 @@ extern int  dokill(int);
 extern void over(int);
 extern void init(void);
 extern void pollch(int);
-extern int  getrand(int);
+extern unsigned int getrand(int);
 
 #endif /* PACDEFS_H_ */
