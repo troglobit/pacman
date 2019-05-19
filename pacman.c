@@ -1,11 +1,13 @@
-/*	Copyright (c) 1984 AT&T	*/
+/*	Copyright (c) 1990 UNIX System Laboratories, Inc.	*/
+/*	Copyright (c) 1988 AT&T	*/
 /*	  All Rights Reserved  	*/
 
-/*	THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF AT&T	*/
+/*	THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF     	*/
+/*	UNIX System Laboratories, Inc.                     	*/
 /*	The copyright notice above does not evidence any   	*/
 /*	actual or intended publication of such source code.	*/
 
-#ident	"@(#)curses:demo/pacman/pacman.c	1.1"
+#ident	"@(#)curses:demo/pacman/pacman.c	1.2"
 /*
  * PACMAN  - written by Dave Nixon, AGS Computers Inc., July, 1981.
  * Converted for curses Feb 1982 by Mark Horton.
@@ -95,7 +97,7 @@ char **argv;
 
 	game = 0;
 
-	pflash = A_BLINK;
+	pflash = A_BLINK | COLOR_PAIR (5);
 	mflash = A_BOLD;
 	rflash = A_REVERSE;
 
@@ -191,7 +193,7 @@ redraw:
 			mptr->dirn = DNULL;
 			mptr->danger = TRUE;
 			mptr->stat = START;
-			PLOT(mptr->ypos, mptr->xpos, monst_names[monstcnt]);
+			PLOT(mptr->ypos, mptr->xpos, monst_names[monstcnt] | COLOR_PAIR(monstcnt+1));
 			mptr->xdpos = mptr->xpos;
 			mptr->ydpos = mptr->ypos;
 		};

@@ -1,11 +1,13 @@
-/*	Copyright (c) 1984 AT&T	*/
+/*	Copyright (c) 1990 UNIX System Laboratories, Inc.	*/
+/*	Copyright (c) 1988 AT&T	*/
 /*	  All Rights Reserved  	*/
 
-/*	THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF AT&T	*/
+/*	THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF     	*/
+/*	UNIX System Laboratories, Inc.                     	*/
 /*	The copyright notice above does not evidence any   	*/
 /*	actual or intended publication of such source code.	*/
 
-#ident	"@(#)curses:demo/pacman/monster.c	1.1"
+#ident	"@(#)curses:demo/pacman/monster.c	1.2"
 #include <stdio.h>
 #include	"pacdefs.h"
 
@@ -60,8 +62,8 @@ startmonst()
 			mptr->xdpos = MBEGINX;
 			mptr->stat = RUN;
 			PLOT(MBEGINY, MBEGINX, mptr->danger ?
-				monst_names[monstnum] | mflash :
-				runner_names[monstnum] | rflash);
+				monst_names[monstnum] | mflash | COLOR_PAIR (monstnum+1):
+				runner_names[monstnum] | rflash | COLOR_PAIR (monstnum+1));
 
 			/* DRIGHT or DLEFT? */
 			mptr->dirn = getrand(2) + DLEFT;
@@ -138,11 +140,11 @@ monster(mnum)
 					display[mptr->ydpos][mptr->xdpos]);
 				if (mptr->danger == TRUE)
 				{
-					PLOT(newy, newx, monst_names[mnum] | mflash);
+					PLOT(newy, newx, monst_names[mnum] | mflash | COLOR_PAIR(mnum+1));
 				}
 				else if (killflg != GOTONE)
 				{
-					PLOT(newy, newx, runner_names[mnum] | rflash);
+					PLOT(newy, newx, runner_names[mnum] | rflash | COLOR_PAIR(mnum+1));
 				};
 				mptr->ydpos = newy;
 				mptr->xdpos = newx;

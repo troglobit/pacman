@@ -1,15 +1,17 @@
-/*	Copyright (c) 1984 AT&T	*/
+/*	Copyright (c) 1990 UNIX System Laboratories, Inc.	*/
+/*	Copyright (c) 1988 AT&T	*/
 /*	  All Rights Reserved  	*/
 
-/*	THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF AT&T	*/
+/*	THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF     	*/
+/*	UNIX System Laboratories, Inc.                     	*/
 /*	The copyright notice above does not evidence any   	*/
 /*	actual or intended publication of such source code.	*/
 
-#ident	"@(#)curses:demo/pacman/util.c	1.1"
+#ident	"@(#)curses:demo/pacman/util.c	1.2"
 #include "pacdefs.h"
 #include <signal.h>
 #include <pwd.h>
-#include <term.h>
+#include <curses.h>
 
 extern char
 	*mktemp();
@@ -248,7 +250,7 @@ dokill(mnum)
 		mptr->xpos = MSTARTX + (2 * mnum);
 		mptr->danger = TRUE;
 		mptr->stat = START;
-		PLOT(mptr->ypos, mptr->xpos, monst_names[mnum]);
+		PLOT(mptr->ypos, mptr->xpos, monst_names[mnum] | COLOR_PAIR(mnum+1));
 		monsthere++;
 		rounds = 1;	/* force it to be a while before he comes out */
 		switch (monsthere) {
@@ -424,6 +426,14 @@ init()
 
 	/* Curses init - could probably eliminate much of stuff below */
 	initscr();
+	if ((start_color()) == OK)
+	{
+	     init_pair (1, COLOR_YELLOW, COLOR_BLUE);
+	     init_pair (2, COLOR_BLUE, COLOR_YELLOW);
+	     init_pair (3, COLOR_YELLOW, COLOR_GREEN);
+	     init_pair (4, COLOR_MAGENTA, COLOR_CYAN);
+	     init_pair (5, COLOR_YELLOW, COLOR_RED);
+	}
 	noecho();
 	crmode();
 	nonl();
