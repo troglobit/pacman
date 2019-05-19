@@ -286,7 +286,7 @@ redraw:
 	SPLOT(9, 45, "IN THE END!");
 	update();
 	syncscreen();
-	over();
+	over(0);
 }
 
 pacman()

@@ -315,7 +315,7 @@ instruct()
  * over -- game over processing
  */
 
-over()
+void over(int signo)
 {
 	register int i;
 	register int line, col;
@@ -409,7 +409,6 @@ init()
 	register int tries = 0;
 	static int lastchar = DELETE;
 	extern short ospeed;		/* baud rate for crt (for tputs()) */
-	int over();
 
 	errno = 0;
 	(void) time(&timein);	/* get start time */
@@ -532,7 +531,7 @@ readin:
 	case ABORT:
 	case DELETE:
 	case QUIT:
-		over();
+		over(0);
 		break;
 
 	case 'S':
