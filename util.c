@@ -9,6 +9,7 @@
 
 #ident	"@(#)curses:demo/pacman/util.c	1.2"
 #include "pacdefs.h"
+#include <errno.h>
 #include <signal.h>
 #include <pwd.h>
 #include <curses.h>
@@ -18,7 +19,6 @@ extern char
 
 extern int
 	delay,
-	errno,
 	game,
 	wmonst,
 	boardcount,
