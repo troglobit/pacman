@@ -247,7 +247,7 @@ int xxx;
 
 int movie(void)
 {
-	int i, j, k;
+	int i, j;
 
 	clear();
 	syncscreen();

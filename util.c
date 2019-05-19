@@ -411,8 +411,6 @@ void leave(void)
 void init(void)
 {
 	register int tries = 0;
-	static int lastchar = DELETE;
-	extern short ospeed;		/* baud rate for crt (for tputs()) */
 
 	errno = 0;
 	(void) time(&timein);	/* get start time */

@@ -299,7 +299,6 @@ static void pacman(void)
 	register int sqtype;
 	register int mcnt;
 	register int tmpx, tmpy;
-	int deltat;
 	struct pac *mptr;
 	int bscore;
 	char msgbuf[50];
