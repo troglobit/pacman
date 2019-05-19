@@ -16,11 +16,9 @@
 #include <pwd.h>
 #include <stdlib.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 #include <curses.h>
-
-extern char
-	*mktemp();
 
 extern int
 	delay,
@@ -34,9 +32,6 @@ extern int
 	bcount,
 	showcount,
 	goldcnt;
-
-extern long
-	time();
 
 extern struct pac
 	*pacptr;
