@@ -5,6 +5,7 @@ LDLIBS = -lcurses
 all: pacman
 
 pacman:	$(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDLIBS)
 
 pacman.o:  pacman.c  pacdefs.h
 monster.o: monster.c pacdefs.h
