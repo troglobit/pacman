@@ -9,6 +9,7 @@
 
 #ident	"@(#)curses:demo/pacman/util.c	1.2"
 #include "pacdefs.h"
+#include <err.h>
 #include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -336,9 +337,16 @@ void over(int signo)
 		(void) printw("|                           |");
 		POS(line++, col);
 		(void) printw("| Game type: %6.6s         |",game==1?"easy":game==2?"medium":"smart");
-		if ((scorefile = open(MAXSCORE, 2)) != -1)
+
+		scorefile = open(MAXSCORE, 2);
+		if (scorefile != -1)
 		{
-			read(scorefile, (char *)scoresave, sizeof(scoresave));
+			int rc;
+
+			rc = read(scorefile, (char *)scoresave, sizeof(scoresave));
+			if (rc == -1)
+				warn("Failed reading score file %s", MAXSCORE);
+
 			for (i = MSSAVE - 1; i >= 0; i--) {
 				if (scoresave[game - 1].entry[i].score < pscore)
 				{
@@ -354,7 +362,9 @@ void over(int signo)
 				};
 			};
 			lseek(scorefile, 0l, 0);
-			write(scorefile, (char *)scoresave, sizeof(scoresave));
+			rc = write(scorefile, (char *)scoresave, sizeof(scoresave));
+			if (rc == -1)
+				warn("Failed writing score file %s", MAXSCORE);
 			close(scorefile);
 			POS(line++, col);
 			(void) printw("| High Scores to date:      |");
