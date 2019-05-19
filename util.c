@@ -280,15 +280,6 @@ clr()
 	clear();
 }
 
-printw(fmt, p1, p2, p3, p4)
-char *fmt;
-int p1, p2, p3, p4;
-{
-	static char buf[100];
-	sprintf(buf, fmt, p1, p2, p3, p4);
-	addstr(buf);
-}
-
 /*
  *	display initial instructions
  */
