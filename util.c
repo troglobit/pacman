@@ -180,8 +180,8 @@ void update(void)
 
 void reinit(void)
 {
-	register int locx, locy;
-	register char tmp;
+	int locx, locy;
+	char tmp;
 
 	if (boardcount % 2 == 0)
 		movie();
@@ -211,7 +211,7 @@ char	*string;
 int dokill(mnum)
 	int mnum;
 {
-	register struct pac *mptr;
+	struct pac *mptr;
 	char msgbuf[50];
 	int bscore;
 
@@ -302,10 +302,10 @@ void instruct(void)
 
 void over(int signo)
 {
-	register int i;
-	register int line, col;
-	int scorefile = 0;
 	struct passwd *p;
+	int scorefile = 0;
+	int line, col;
+	int i;
 
 	(void)signo;
 	syncscreen();
@@ -401,7 +401,7 @@ void leave(void)
 
 void init(void)
 {
-	register int tries = 0;
+	int tries = 0;
 
 	errno = 0;
 	(void) time(&timein);	/* get start time */
@@ -560,7 +560,7 @@ readin:
 unsigned int getrand(range)
 	int range;
 {
-	register unsigned int q;
+	unsigned int q;
 
 	q = rand();
 	return(q % range);

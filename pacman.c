@@ -83,17 +83,16 @@ int main(argc, argv)
 int argc;
 char **argv;
 {
-	register int tmp;		/* temp variables */
-	register int pac_cnt;
-	register int monstcnt;	/* monster number */
-	int tries;
-	long denom;
 	struct pac *mptr;
-	char gcnt[10];
 	char msgbuf[50];
-	int c;
-	extern char *optarg;
+	char gcnt[10];
+	long denom;
 	int chperturn = DEFCHPERTURN;
+	int monstcnt;	/* monster number */
+	int tmp;	/* temp variables */
+	int pac_cnt;
+	int tries;
+	int c;
 
 	game = 0;
 
@@ -289,12 +288,12 @@ redraw:
 
 static void pacman(void)
 {
-	register int sqtype = VACANT;
-	register int mcnt;
-	register int tmpx, tmpy;
 	struct pac *mptr;
-	int bscore;
 	char msgbuf[50];
+	int sqtype = VACANT;
+	int mcnt;
+	int tmpx, tmpy;
+	int bscore;
 
 	syncscreen();
 

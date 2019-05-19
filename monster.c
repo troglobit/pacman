@@ -33,8 +33,8 @@ char *full_names[] = {
 
 void startmonst(void)
 {
-	register struct pac *mptr;
-	register int monstnum;
+	struct pac *mptr;
+	int monstnum;
 
 	for (mptr = &monst[0], monstnum = 0; monstnum < MAXMONSTER; mptr++, monstnum++)
 	{
@@ -65,9 +65,9 @@ void startmonst(void)
 void monster(mnum)
 	int mnum;
 {
-	register int newx = 0, newy = 0;
-	register int tmpx, tmpy;
 	struct pac *mptr;
+	int newx = 0, newy = 0;
+	int tmpx, tmpy;
 
 	mptr = &monst[mnum];
 
@@ -152,16 +152,16 @@ int which(mptr, x, y)	/* which directions are available ? */
 	struct pac *mptr;
 	int x, y;
 {
-	register int movecnt;
-	register int submovecnt;
-	register int next;
+	char *brdptr;
+	int movecnt;
+	int submovecnt;
+	int next;
 	int moves[4];
 	int submoves[4];
 	int nydirn, nxdirn;
 	int goodmoves;
 	int offx, offy;
 	int tmpdirn;
-	char *brdptr;
 
 	/*
 	 * As a general rule: determine the set of all
