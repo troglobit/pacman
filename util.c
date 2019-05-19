@@ -163,11 +163,6 @@ struct scorebrd
 
 void leave(void);
 
-void syncscreen(void)
-{
-	refresh();
-}
-
 void update(void)
 {
 	char	str[10];
@@ -293,7 +288,7 @@ void instruct(void)
 	printw("        Type:   1       easy game\n");
 	printw("                2       intelligent monsters\n");
 	printw("                3       very intelligent monsters\n");
-	syncscreen();
+	refresh();
 }
 
 /*
@@ -308,7 +303,7 @@ void over(int signo)
 	int i;
 
 	(void)signo;
-	syncscreen();
+	refresh();
 	signal(SIGINT, SIG_IGN);
 	/* high score to date processing */
 	if (game != 0)
@@ -377,7 +372,7 @@ void over(int signo)
 		POS(line, col);
 		(void) printw("|___________________________|");
 	};
-	syncscreen();
+	refresh();
 	leave();
 }
 
@@ -389,7 +384,7 @@ void leave(void)
 {
 	leaveok(stdscr, FALSE);
 	POS(23, 0);
-	syncscreen();
+	refresh();
 	endwin();
 	exit(0);
 }
@@ -465,7 +460,7 @@ int sltime;
 	stop = 0;
 readin:
 
-	syncscreen();
+	refresh();
 	if (bufstat == EMPTY) {
 		c = getch();
 		if (c < 0) {

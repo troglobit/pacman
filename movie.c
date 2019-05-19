@@ -34,7 +34,7 @@ static void left1(void)
 	SPLOT(11, 0, "     \\   \n");
 	SPLOT(12, 0, " O O |   \n"); 
 	SPLOT(13, 0, "^v^v^v   \n");
-	syncscreen();
+	refresh();
 }
 
 static void left2(void)
@@ -43,7 +43,7 @@ static void left2(void)
 	SPLOT(11, 0, "    \\   \n");
 	SPLOT(12, 0, "O O |   \n"); 
  	SPLOT(13, 0, "v^v^v   \n");
-	syncscreen();
+	refresh();
 }
 
 static void left3(void)
@@ -52,7 +52,7 @@ static void left3(void)
 	SPLOT(11, 0, "   \\   \n");
 	SPLOT(12, 0, " O |   \n"); 
 	SPLOT(13, 0, "^v^v   \n");
-	syncscreen();
+	refresh();
 }
 
 static void left4(void)
@@ -61,7 +61,7 @@ static void left4(void)
 	SPLOT(11, 0, "  \\   \n");
 	SPLOT(12, 0, "O |   \n"); 
 	SPLOT(13, 0, "v^v   \n");
-	syncscreen();
+	refresh();
 }
 
 static void left5(void)
@@ -70,7 +70,7 @@ static void left5(void)
 	SPLOT(11, 0, " \\   \n");
 	SPLOT(12, 0, " |   \n"); 
 	SPLOT(13, 0, "^v   \n");
-	syncscreen();
+	refresh();
 }
 
 static void left6(void)
@@ -79,7 +79,7 @@ static void left6(void)
 	SPLOT(11, 0, "\\   \n");
 	SPLOT(12, 0, "|   \n"); 
 	SPLOT(13, 0, "v   \n");
-	syncscreen();
+	refresh();
 }
 
 static void left7(void)
@@ -88,7 +88,7 @@ static void left7(void)
 	SPLOT(11, 0, "   \n");
 	SPLOT(12, 0, "   \n"); 
 	SPLOT(13, 0, "   \n");
-	syncscreen();
+	refresh();
 }
 
 static void right1(void)
@@ -240,7 +240,7 @@ void movie(void)
 	int i, j;
 
 	clear();
-	syncscreen();
+	refresh();
 
 	/*
 	 * this loop moves the monster and the small pacman from right to
@@ -256,7 +256,7 @@ void movie(void)
 		else {
 			SPLOT(13, 1, " ");
 		}
-		syncscreen();
+		refresh();
 	}
 
 	/*
@@ -301,34 +301,34 @@ void movie(void)
 				break;
 			}
 		}
-		syncscreen();
+		refresh();
 	}
 	/*
 	 * right1-right9 are partial monster routines, for moving him off to
 	 * the right of the screen.  monst4 prints the whole pacman.
 	 */
-	right1(); monst4(50); syncscreen();
-	right2(); monst4(51); syncscreen();
-	right3(); monst4(52); syncscreen();
-	right4(); monst4(53); syncscreen();
-	right5(); monst4(54); syncscreen();
-	right6(); monst4(55); syncscreen();
-	right7(); monst4(56); syncscreen();
-	right8(); monst4(57); syncscreen();
-	right9(); monst4(58); syncscreen();
+	right1(); monst4(50); refresh();
+	right2(); monst4(51); refresh();
+	right3(); monst4(52); refresh();
+	right4(); monst4(53); refresh();
+	right5(); monst4(54); refresh();
+	right6(); monst4(55); refresh();
+	right7(); monst4(56); refresh();
+	right8(); monst4(57); refresh();
+	right9(); monst4(58); refresh();
 
 	/* Now finish moving the pacman to the end of the screen.  */
 	for (i=59; i < 74; i++) {
 		monst4(i);
-		syncscreen();
+		refresh();
 	}
 
 	/* monst5-monst7 print pieces of pacman as he moves off the screen */
-	monst5(74); syncscreen();
-	monst6(75); syncscreen();
-	monst7(76); syncscreen();
+	monst5(74); refresh();
+	monst6(75); refresh();
+	monst7(76); refresh();
 
 	/* clean up a little bit */
 	clear();
-	syncscreen();
+	refresh();
 }

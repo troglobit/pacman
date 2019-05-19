@@ -198,7 +198,7 @@ redraw:
 		};
 		rounds = 0;	/* timing mechanism */
 		update();
-		syncscreen();
+		refresh();
 		tries = 0;
 		while ((pacptr->dirn == DNULL) && (tries++ < 300))
 		{
@@ -263,7 +263,7 @@ redraw:
 			}
 			if (rounds % monst_often == 0)
 				update();	/* score display etc */
-			syncscreen();
+			refresh();
 			if (goldcnt <= 0)
 			{
 				potintvl -= 5;
@@ -276,13 +276,13 @@ redraw:
 		sprintf(msgbuf, "Oops!  %s got you!\n", full_names[wmonst]);
 		SPLOT(5, 45, msgbuf);
 		flushinp();
-		syncscreen();
+		refresh();
 		sleep(2);
 	}
 	SPLOT(8, 45, "THE MONSTERS ALWAYS TRIUMPH");
 	SPLOT(9, 45, "IN THE END!");
 	update();
-	syncscreen();
+	refresh();
 	over(0);
 }
 
@@ -295,7 +295,7 @@ static void pacman(void)
 	int tmpx, tmpy;
 	int bscore;
 
-	syncscreen();
+	refresh();
 
 	/* pause; this is the main delay on each turn */
 	napms(delay);
@@ -483,5 +483,5 @@ static void pacman(void)
 	{
 		PLOT(pacptr->ypos, pacptr->xpos, pacsymb | pflash);
 	};
-	syncscreen();
+	refresh();
 }
