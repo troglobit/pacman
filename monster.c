@@ -41,7 +41,7 @@ char *full_names[] = {
 	"Blinky", "Inky", "Pinky", "Clyde", 0
 };
 
-startmonst()
+void startmonst(void)
 {
 	register struct pac *mptr;
 	register int monstnum;
@@ -72,7 +72,7 @@ startmonst()
 	}
 }
 
-monster(mnum)
+void monster(mnum)
 	int mnum;
 {
 	register int newx,newy;
@@ -158,7 +158,7 @@ monster(mnum)
 	}
 }
 
-which(mptr, x, y)	/* which directions are available ? */
+int which(mptr, x, y)	/* which directions are available ? */
 	struct pac *mptr;
 	int x, y;
 {

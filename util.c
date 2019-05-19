@@ -11,7 +11,9 @@
 #include "pacdefs.h"
 #include <errno.h>
 #include <signal.h>
+#include <fcntl.h>
 #include <pwd.h>
+#include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
 #include <curses.h>
@@ -173,12 +175,14 @@ struct scorebrd
 	struct uscore entry[MSSAVE];
 } scoresave[MGTYPE];
 
-syncscreen()
+void leave(void);
+
+void syncscreen(void)
 {
 	refresh();
 }
 
-update()
+void update(void)
 {
 	char	str[10];
 
@@ -188,7 +192,7 @@ update()
 	SPLOT(21, 57, str);
 }
 
-reinit()
+void reinit(void)
 {
 	register int locx, locy;
 	register char tmp;
@@ -212,13 +216,13 @@ reinit()
 	boardcount++;
 }
 
-errgen(string)
+void errgen(string)
 char	*string;
 {
 	SPLOT(23,45,string);
 }
 
-dokill(mnum)
+int dokill(mnum)
 	int mnum;
 {
 	register struct pac *mptr;
@@ -272,7 +276,7 @@ dokill(mnum)
  * clr -- issues an escape sequence to clear the display
  */
 
-clr()
+void clr(void)
 {
 	clear();
 }
@@ -281,7 +285,7 @@ clr()
  *	display initial instructions
  */
 
-instruct()
+void instruct(void)
 {
 	clr();
 	POS(0, 0);
@@ -385,7 +389,7 @@ void over(int signo)
  * leave -- flush buffers,kill the Child, reset tty, and delete tempfile
  */
 
-leave()
+void leave(void)
 {
 	leaveok(stdscr, FALSE);
 	POS(23, 0);
@@ -399,7 +403,7 @@ leave()
  *      the input terminal.
  */
 
-init()
+void init(void)
 {
 	register int tries = 0;
 	static int lastchar = DELETE;
@@ -441,7 +445,7 @@ init()
 	while ((game == 0) && (tries++ < 300))
 	{
 		napms(100);
-		poll(1);
+		pollch(1);
 	};
 	if (tries >= 300)
 	{
@@ -457,7 +461,8 @@ init()
  * poll -- read characters sent by input subprocess and set global flags
  */
 
-poll(sltime)
+void pollch(sltime)
+int sltime;
 {
 	int stop;
 	int c;
@@ -557,7 +562,7 @@ readin:
 	}
 }
 
-getrand(range)
+int getrand(range)
 	int range;
 {
 	register unsigned int q;
@@ -572,7 +577,7 @@ getrand(range)
  * This function is convenient for debugging pacman.  It isn't used elsewhere.
  * It's like printf and prints in a window on the right hand side of the screen.
  */
-msgf(fmt, arg1, arg2, arg3, arg4)
+void msgf(fmt, arg1, arg2, arg3, arg4)
 char *fmt;
 int arg1, arg2, arg3, arg4;
 {

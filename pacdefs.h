@@ -8,6 +8,9 @@
 /*	actual or intended publication of such source code.	*/
 
 #ident	"@(#)curses:demo/pacman/pacdefs.h	1.1"
+#ifndef PACDEFS_H_
+#define PACDEFS_H_
+
 #include <curses.h>
 /* dfp #define POS(row,col)    fputs(tgoto(vs_cm,(col),(row)),stdout)*/
 /* #define POS(row,col)	tputs(tgoto(vs_cm,(col),(row)),1,putch) */
@@ -108,3 +111,24 @@ struct	pac
 	int	xdpos;	/* horizontal position currently displayed at */
 	int	ydpos;	/* vertical   position currently displayed at */
 };
+
+/* monster.c */
+extern void startmonst(void);
+extern void monster(int);
+extern int  which(struct pac *, int, int);
+
+/* movie.c */
+extern int  movie(void);
+
+/* util.c */
+extern void syncscreen(void);
+extern void update(void);
+extern void reinit(void);
+extern void errgen(char *);
+extern int  dokill(int);
+extern void over(int);
+extern void init(void);
+extern void pollch(int);
+extern int  getrand(int);
+
+#endif /* PACDEFS_H_ */

@@ -19,7 +19,9 @@
  * Score keeping modified and general terminal handling (termcap routines
  * from UCB's ex) added by Rob Coben, BTL, June, 1980.
  */
+#include <getopt.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
 #include "pacdefs.h"
@@ -82,7 +84,10 @@ struct pac
 
 #define DEFCHPERTURN 60
 
-main(argc, argv)
+static void pacman(void);
+
+int main(argc, argv)
+int argc;
 char **argv;
 {
 	register int tmp;		/* temp variables */
@@ -206,7 +211,7 @@ redraw:
 		while ((pacptr->dirn == DNULL) && (tries++ < 300))
 		{
 			napms(100);
-			poll(1);
+			pollch(1);
 		}
 
 		/* main game loop */
@@ -289,7 +294,7 @@ redraw:
 	over(0);
 }
 
-pacman()
+static void pacman(void)
 {
 	register int sqtype;
 	register int mcnt;
@@ -313,7 +318,7 @@ pacman()
 	tcdrain(STDOUT_FILENO);
 
 	/* get command from player, but don't wait */
-	poll(0);
+	pollch(0);
 
 	/* remember current pacman position */
 	tmpx = pacptr->xpos;
