@@ -76,7 +76,10 @@ struct pac
 	PSTARTY,
 	DNULL,
 	SLOW,
-	FALSE
+	FALSE,
+	0,
+	0,
+	0
 };
 
 struct pac
@@ -296,7 +299,7 @@ redraw:
 
 static void pacman(void)
 {
-	register int sqtype;
+	register int sqtype = VACANT;
 	register int mcnt;
 	register int tmpx, tmpy;
 	struct pac *mptr;

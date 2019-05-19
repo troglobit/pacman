@@ -75,7 +75,7 @@ void startmonst(void)
 void monster(mnum)
 	int mnum;
 {
-	register int newx,newy;
+	register int newx = 0, newy = 0;
 	register int tmpx, tmpy;
 	struct pac *mptr;
 
