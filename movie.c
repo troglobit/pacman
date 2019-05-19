@@ -245,7 +245,7 @@ int xxx;
 	SPLOT(13, xxx, "  \\ ");
 }
 
-int movie(void)
+void movie(void)
 {
 	int i, j;
 

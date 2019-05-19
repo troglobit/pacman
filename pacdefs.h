@@ -118,7 +118,7 @@ extern void monster(int);
 extern int  which(struct pac *, int, int);
 
 /* movie.c */
-extern int  movie(void);
+extern void movie(void);
 
 /* util.c */
 extern void syncscreen(void);
