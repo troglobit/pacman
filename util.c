@@ -274,8 +274,8 @@ dokill(mnum)
 }
 
 /*
-/* clr -- issues an escape sequence to clear the display
-*/
+ * clr -- issues an escape sequence to clear the display
+ */
 
 clr()
 {
