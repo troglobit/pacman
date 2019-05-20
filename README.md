@@ -82,4 +82,7 @@ Other Linux systems have similar packages.  On FreeBSD you don't need
 anything in particular as long as you can fetch the tarball and have
 a working `cc` and `make`.
 
+FreeBSD users can also download the true original from this mailing
+list entry https://marc.info/?l=freebsd-hackers&m=94345990014968&w=2
+
 [master]: https://github.com/troglobit/pacman/archive/master.tar.gz
