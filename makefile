@@ -13,7 +13,12 @@ util.o:    util.c    pacdefs.h
 movie.o:   movie.c   pacdefs.h
 
 install: pacman
-	install -b -s pacman /usr/games/pacman
+	@touch /tmp/pacman.log
+	install -b -D -s pacman $(DESTDIR)/usr/games/pacman
+	install -b -D pacman.6 $(DESTDIR)/usr/man/man6/pacman.6
+	install -b -D README.md $(DESTDIR)/usr/share/doc/pacman/README.md
+	install -b -D /tmp/pacman.log $(DESTDIR)/var/games/pacman.log
+	@rm /tmp/pacman.log
 
 clean:
 	-rm -f *.o
